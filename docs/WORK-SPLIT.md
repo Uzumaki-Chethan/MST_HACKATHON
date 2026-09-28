@@ -7,6 +7,8 @@ The spec (docs/SPEC.md §10) plans for 4 people. We run it with 2 laptops, each 
 | **Laptop 1** | **WP-A** contracts & chain ops, **WP-D** backend server / indexer / keeper / IoT / demo ops | `lap1` | `packages/contracts/**`, `packages/shared/**` (except `src/schemas/`), `packages/backend/**` (except `src/ai/`, `src/agent/`), `firmware/**`, `README.md`, `docs/demo-script.md` |
 | **Laptop 2** | **WP-C** frontend, **WP-B** AI attestor agent | `lap2` | `packages/frontend/**`, `packages/backend/src/ai/**`, `packages/backend/src/agent/**`, `packages/shared/src/schemas/**` |
 
+Each laptop keeps its own notes file: Laptop 1 → `CLAUDE1.md`, Laptop 2 → `CLAUDE2.md`. Read the other one after every merge.
+
 Shared files that both laptops may touch: `docs/SPEC-CHANGES.md` (only append) and `pnpm-lock.yaml` (if it conflicts, take main's copy and rerun `pnpm install`).
 `packages/backend/package.json` already lists the dependencies from SPEC §4.2 for both WP-B and WP-D, so neither laptop should need to edit it. If you do need to, append only and say so in chat.
 
