@@ -27,6 +27,8 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
+- 2026-09-28 — **Demo-cast wallets created and funded on MST testnet.** The public addresses are in `docs/demo-cast.md`; use them for the `/status` page and demo pages. The private keys are in Laptop 1's gitignored `.env.local` and will never be in git; the human shares that file with you privately if you need it. You only need it to run the backend agent against testnet yourself; fixtures and BridgeKey don't need it.
+  - Appendix C results so far: #4 the faucet gives **10 tMSTC per claim**, so money is not a constraint and the rate stays at the default. #5 the Vibe Kit works. #12 transactions confirm within a few seconds.
 - 2026-09-28 — **D0 merged to main.**
   - The backend server works end to end. Run `pnpm --filter @nestledger/backend dev` (port 8080).
   - Built: config, SQLite schema (§7.4), SIWE `/auth/nonce` + `/auth/verify` with a 12 h JWT, `POST/GET /evidence` with the §7.6 access rules, `POST/GET /manifests`, `GET /reports/:hash`, `/health`, and the `{error:{code,message}}` error shape.
