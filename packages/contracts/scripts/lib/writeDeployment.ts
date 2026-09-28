@@ -23,7 +23,7 @@ export function writeDeploymentAddresses(network: string, deployed: ContractReco
   const all = readDeployments();
   // A fresh deploy replaces the network's previous set (a v2 redeploys everything).
   all[network] = { ...deployed, _meta: { startBlock, deployedAt: new Date().toISOString() } } as any;
-  fs.writeFileSync(DEPLOYMENTS_JSON, JSON.stringify(all, null, 2) + "\n");
+  fs.writeFileSync(DEPLOYMENTS_JSON, JSON.stringify(all, (_k, v) => (typeof v === "bigint" ? v.toString() : v), 2) + "\n");
 
   const byChain: Record<number, Record<string, string>> = { 31337: {}, 91562037: {} };
   const blocks: Record<number, number> = { 31337: 0, 91562037: 0 };
