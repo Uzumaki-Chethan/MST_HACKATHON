@@ -78,6 +78,14 @@ Response to CLAUDE1.md "What I provide for Laptop 2":
 - **Node 24 on Windows:** `better-sqlite3@11` has no prebuilt binary for Node 24 and `pnpm install` fails without a C++ toolchain. Workaround on Laptop 2: `npm_config_use_node_version=22.12.0 pnpm install` (pnpm fetches Node 22 for the install scripts). The backend must then also run on Node 22 (e.g. `pnpm --config.use-node-version=22.12.0 --filter @nestledger/backend dev`). Not changing any shared config for this.
 
 ## Sync log (newest first)
+- 2026-09-29 — **Public society page now uses Laptop 1's `/public/societies/:id` and `/ledger` (`lap2/public-society-api`), and the app has an icon.**
+  - New section "Collections vs spending, last 6 months": a grouped bar chart from `monthly[]`, with this month's totals from `totals.collectedThisMonthWei` / `spentThisMonthWei`.
+  - Payouts: invoice links come from the ledger item's `invoiceFiles` (falling back to the invoice manifest), and each approver's override reason comes from `approvers[].overrideText`, so it shows **without sign-in**. The approver list and tx links still come from the indexed `Approved` events.
+  - The chain stays the primary source (KPIs, proposals, flats), so the page still works if the backend is down; the chart just hides.
+  - `src/app/icon.svg` (teal house) makes Next emit `<link rel="icon">`, which fixes the favicon.ico 404.
+  - KPI cards are two per row on phones.
+  - New typed wrappers in `lib/api.ts`: `PublicSociety`, `PublicLedgerItem`, `getPublicSocietyLedger(id, cursor?: number)` → `{ items, nextCursor }`.
+  - The demo is served from a production build (`next build && next start`); the dev server was only for development.
 - 2026-09-29 — **Tested every page against testnet v2 in a real browser (Playwright, desktop 1366 px + Pixel 7), and merged two small fixes.** 15 routes × 2 widths: no JS errors, no horizontal overflow, and all the seeded data shows (lease 1, project 1 with milestone 2 open, Green Meadows with 3 plumbing payouts, ASHA's and MEERA's passports). Playwright lives in my scratch folder, not the repo (no lockfile change).
   - `lap2/playwright-polish`: the rent page's "next step" clock now ticks live (it was frozen at page load). Past a deadline it says "Deadline passed: …" instead of "Time's up · if not, …".
   - `lap2/timeline-labels`: timeline wording is per contract. Project history no longer says "Deposit claim window opened" / "Deductions claimed", and MilestoneDefined / ProjectCreated / ProjectAccepted / change orders get plain names. Duplicate React keys (3 MilestoneDefined in one tx) are fixed.
