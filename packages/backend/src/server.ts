@@ -22,7 +22,7 @@ import { registerCaptureSessions } from "./evidence/capture.js";
 
 export async function buildServer(cfg: Config = config, db: Db = openDb(cfg.dataDir)) {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL || "info" } });
-  await app.register(cors, { origin: cfg.publicWebOrigin });
+  await app.register(cors, { origin: cfg.publicWebOrigins });
   await app.register(multipart, { limits: { fileSize: MAX_EVIDENCE_BYTES } });
   app.setErrorHandler(errorHandler);
 
