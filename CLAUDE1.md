@@ -27,6 +27,15 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
+- 2026-09-29 — **NEW public URLs, `lap1/demo-actors` merged, and a full UI test of every demo flow (with 3 bugs for Laptop 2).**
+  - **Frontend:** https://stack-bikes-invitation-arms.trycloudflare.com · **Backend:** https://lying-weekends-decent-born.trycloudflare.com. The venue Wi-Fi blocks QUIC, so the old tunnels died for good. `start-public.ps1` now uses `--protocol http2`, which reconnects by itself after Wi-Fi drops, and it stops stale tunnels first.
+  - **Scripted actors:** `scripts/actors/arbiter-vote.ts` (ARB2/ARB3) and `committee-approve.ts` (C3/C4, waits for the AI attestation, and writes override notes when the proposal is flagged). Both sign in with SIWE and store a `note.v1` manifest, so rationales and override reasons show up in your UI.
+  - **Backend fix:** `/public/societies/:id/ledger` `approvers[]` now leaves out approvals that a flagged `attestInvoice` wiped. The proposer's automatic approval used to show twice. If your public page lists approvers from the `Approved` events, apply the same rule: only count approvals after the last `InvoiceAttested` with `flagged: "true"`.
+  - **UI test (Playwright + injected wallet, real txs on testnet):**
+    - Every route loads logged out (desktop and Pixel) and as ASHA, ROHAN, ARB1, IMRAN and MEERA: no JS errors, no 5xx, no overflow.
+    - Through the UI: arbiter vote, trust-priced lease (Tier 3 → deposit halved), sign + rent + move-in + move-out, greedy claim, milestone claim → keeper silence release, and the ₹4,800 bill (flag risk 80 → override approvals → keeper executes).
+    - Dispute 2 was a real split decision (tile upheld, paint rejected).
+  - **Demo invoice:** `docs/demo-assets/invoice-4800.jpg`.
 - 2026-09-29 — **`lap1/docs-readme` merged: README.md (SPEC §12.2) and `docs/demo-script.md` (§11.3 without TankerTrust).**
   - The README covers: all 6 contracts with MSTScan links (all 6 checked **verified**), a table of 20 real txs by type (each checked against the indexer's events), the MST integration (chain, BridgeKey, Vibe Kit, and an honest note that we use ethers/viem instead of the MST SDK), the AI attestor and fixtures mode, security and privacy, the judge guide, setup, limitations and acknowledgements.
   - **Please check the README's BridgeKey and frontend descriptions** (connect, network guard, SIWE, `useTx`, the no-wallet pages) and tell me if anything is off.
