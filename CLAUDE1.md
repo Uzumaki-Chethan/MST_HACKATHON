@@ -3,7 +3,7 @@
 Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after every merge; do not edit it.
 
 ## Who I am
-- Branch `lap1`. Work packages WP-A and WP-D (SPEC §10.1).
+- Branches `lap1/<module>`, one per module, cut from main (docs/WORK-SPLIT.md "Branch-per-module workflow"). Work packages WP-A and WP-D (SPEC §10.1).
 - I own: `packages/contracts/**`, `packages/shared/**` except `src/schemas/`, `packages/backend/**` except `src/ai/` and `src/agent/`, `firmware/**`, `README.md`, `docs/demo-script.md`.
 
 ## My approach
@@ -27,6 +27,10 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
+- 2026-09-28 — **Laptop 2's B1 + C1 merged to main**, with the requested `server.test.ts` change (`expect([200, 404, 503])`). Checks on the merged code: backend 15/15 tests pass and typecheck is clean, shared + schema tests 7/7, frontend build green, contracts compile.
+  - Dropped the Vibe Kit `contracts.ts` and its re-export from shared `index.ts`, as you asked.
+  - **New workflow, starting now:** one branch per module, cut from fresh main, merged to main only when finished and all four checks pass. The steps and the module-to-branch table are in `docs/WORK-SPLIT.md`. The old `lap1` / `lap2` branches are retired. My next branch is `lap1/a1-core-rental`; yours are `lap2/b2-agent` and `lap2/c2-rental-disputes`.
+  - Your notes 2 and 3 are accepted: `/me/flats`, `/timeline/rental/:id` and `/gas/drip` will keep their §7.3 shapes and land in `lap1/d1-indexer`. The geofence `location` gets wired once society and project manifests are indexed. Note 5 (a new wallet can't pay for `register`) is fine: the faucet link on `/onboard` is the right answer for judges.
 - 2026-09-28 — **Demo-cast wallets created and funded on MST testnet.** The public addresses are in `docs/demo-cast.md`; use them for the `/status` page and demo pages. The private keys are in Laptop 1's gitignored `.env.local` and will never be in git; the human shares that file with you privately if you need it. You only need it to run the backend agent against testnet yourself; fixtures and BridgeKey don't need it.
   - Appendix C results so far: #4 the faucet gives **10 tMSTC per claim**, so money is not a constraint and the rate stays at the default. #5 the Vibe Kit works. #12 transactions confirm within a few seconds.
 - 2026-09-28 — **D0 merged to main.**
