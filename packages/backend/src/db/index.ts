@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS events    (id INTEGER PRIMARY KEY AUTOINCREMENT, cont
                         k1 TEXT, k2 TEXT, UNIQUE(tx_hash, log_index));
 CREATE INDEX IF NOT EXISTS events_k ON events(contract, k1);
 CREATE TABLE IF NOT EXISTS indexer_state (id INTEGER PRIMARY KEY CHECK (id = 1), last_block INTEGER);
+-- small key/value store (e.g. which deployment the indexed events belong to; not in SPEC §7.4)
+CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS jobs      (key TEXT PRIMARY KEY, kind TEXT, status TEXT, attempts INTEGER DEFAULT 0,
                         last_error TEXT, tx_hash TEXT, updated_at INTEGER);
 CREATE TABLE IF NOT EXISTS drips     (address TEXT PRIMARY KEY, tx_hash TEXT, created_at INTEGER);

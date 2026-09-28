@@ -76,6 +76,7 @@ describe("indexer", () => {
     expect(row!.k2).toBe("0");
     const flat = db.get<{ k1: string; k2: string }>("SELECT k1, k2 FROM events WHERE name = 'FlatAdded'");
     expect(flat).toEqual({ k1: "4", k2: "1" }); // flatId, societyId
+    // The cursor restarted at the new deploy block (100) and caught up to the chain head again.
     expect(db.get<{ last_block: number }>("SELECT last_block FROM indexer_state")!.last_block).toBe(150);
   });
 
@@ -107,5 +108,29 @@ describe("indexer", () => {
       const res = await app.inject({ method: "GET", url: "/me/flats", headers: { authorization: `Bearer ${token}` } });
       expect(res.json()).toEqual([{ flatId: "4", societyId: "1", label: "B-304", maintenanceWei: "2000000000000000" }]);
     });
+  });
+});
+
+describe("indexer after a redeploy", () => {
+  it("keeps its data for the same deployment, and starts over (events, cursor, jobs) for a new one", async () => {
+    const db = openDb(":memory:");
+    const opts = { db, source: fakeSource(150), chainId: 31337, startBlock: 90, log: () => {} };
+    const v1 = startIndexer({ ...opts, contracts: { RentalEscrow: RENTAL, SocietyLedger: LEDGER } });
+    expect(await v1.pollOnce()).toBe(3);
+    db.run("INSERT INTO jobs (key, kind, status) VALUES ('keeper:finalizeBaseline:baseline:7', 'keeper', 'sent')");
+    db.run("INSERT INTO manifests (hash, schema, json) VALUES ('0xabc', 'nestledger.note.v1', '{}')");
+
+    // Restart on the same deployment: nothing is cleared, nothing re-indexed.
+    const again = startIndexer({ ...opts, contracts: { RentalEscrow: RENTAL, SocietyLedger: LEDGER } });
+    expect(await again.pollOnce()).toBe(0);
+    expect(db.get<{ n: number }>("SELECT COUNT(*) AS n FROM events")!.n).toBe(3);
+
+    // Redeploy: new RentalEscrow address and deploy block → old events, cursor and jobs are gone.
+    const v2 = startIndexer({ ...opts, startBlock: 100, contracts: { RentalEscrow: "0x00000000000000000000000000000000000000cc" } });
+    expect(await v2.pollOnce()).toBe(0); // first poll detects the new deployment (fake logs are for the old addresses)
+    expect(db.get<{ n: number }>("SELECT COUNT(*) AS n FROM events")!.n).toBe(0);
+    expect(db.get<{ n: number }>("SELECT COUNT(*) AS n FROM jobs")!.n).toBe(0);
+    expect(db.get<{ n: number }>("SELECT COUNT(*) AS n FROM manifests")!.n).toBe(1); // content-addressed data kept
+    expect(db.get<{ last_block: number }>("SELECT last_block FROM indexer_state")!.last_block).toBe(150);
   });
 });
