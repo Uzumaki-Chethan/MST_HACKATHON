@@ -91,7 +91,7 @@ function OnboardForm() {
         <div className="card space-y-4">
           <fieldset className="space-y-2">
             <legend className="mb-1 text-sm font-medium text-slate-700">What will you use NestLedger for? (pick any)</legend>
-            {(Object.keys(Kind) as KindName[]).map((k) => (
+            {(Object.keys(Kind) as KindName[]).filter((k) => k !== "SUPPLIER").map((k) => (
               <label key={k} className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={roles.includes(k)} onChange={() => toggle(k)} />
                 {ROLE_TEXT[k]}

@@ -11,7 +11,7 @@ import { API_URL, getHealth } from "@/lib/api";
 import { DEMO_CAST } from "@/lib/demoCast";
 import { appChain } from "@/lib/wagmi";
 
-const CONTRACTS: ContractName[] = ["NestRegistry", "NestPassport", "RentalEscrow", "MilestoneEscrow", "DisputeResolver", "SocietyLedger", "TankerTrust"];
+const CONTRACTS: ContractName[] = ["NestRegistry", "NestPassport", "RentalEscrow", "MilestoneEscrow", "DisputeResolver", "SocietyLedger"];
 
 function Dot({ ok }: { ok: boolean | null }) {
   const c = ok === null ? "bg-slate-300" : ok ? "bg-accent" : "bg-red-500";

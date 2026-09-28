@@ -44,25 +44,3 @@ export function useSocietyData(id: string) {
     },
   });
 }
-
-export type Order = {
-  supplier: `0x${string}`; device: `0x${string}`; litresOrdered: number; pricePerLitre: bigint; escrowed: bigint;
-  delivered: number; deadline: bigint; status: number;
-};
-
-export function useOrders(id: string) {
-  const client = usePublicClient({ chainId: appChain.id });
-  const tanker = nestContracts.tanker;
-  return useQuery({
-    queryKey: ["orders", id],
-    enabled: !!tanker.address && !!client,
-    refetchInterval: 5000,
-    queryFn: async () => {
-      const read = <T>(fn: string, args: unknown[]) =>
-        client!.readContract({ address: tanker.address!, abi: tanker.abi, functionName: fn as never, args: args as never }) as Promise<T>;
-      const ids = await read<readonly bigint[]>("ordersOf", [BigInt(id)]);
-      return Promise.all(ids.map(async (oid) => ({ ...(await read<Order>("getOrder", [oid])), id: oid }))).then((xs) => xs.reverse());
-    },
-  });
-}
-

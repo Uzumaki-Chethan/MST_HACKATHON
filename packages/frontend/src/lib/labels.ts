@@ -53,12 +53,6 @@ export const STATUS_LABELS = {
     Rejected: ["Rejected", "bad"],
     Cancelled: ["Cancelled", "neutral"],
   },
-  order: {
-    Open: ["Awaiting delivery", "waiting"],
-    Delivering: ["Delivery in progress", "info"],
-    Settled: ["Delivered and paid", "good"],
-    Expired: ["Expired, refunded", "neutral"],
-  },
 } as const satisfies Record<string, Record<string, readonly [string, Tone]>>;
 
 export type StatusKind = keyof typeof STATUS_LABELS;

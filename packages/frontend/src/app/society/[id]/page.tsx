@@ -3,19 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
-import { OrderStatus, weiToInr, formatINR } from "@nestledger/shared";
+import { weiToInr, formatINR } from "@nestledger/shared";
 import { Amount } from "@/components/Amount";
 import { StatusChip } from "@/components/Badges";
 import { Notice, RequireDeployed } from "@/components/Gates";
 import { AddressLink } from "@/components/TxLink";
 import { useNest } from "@/hooks/useNest";
-import { useOrders, useSocietyData, type SocietyData } from "@/hooks/useSociety";
+import { useSocietyData, type SocietyData } from "@/hooks/useSociety";
 import { sameAddr, ZERO_ADDR } from "@/lib/society";
 import { FlatsTab } from "./flats";
 import { NewProposal } from "./newProposal";
 import { ProposalsList } from "./proposals";
 
-const TABS = ["Overview", "Flats", "Proposals", "Water"] as const;
+const TABS = ["Overview", "Flats", "Proposals"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function SocietyPage({ params }: { params: { id: string } }) {
@@ -66,7 +66,6 @@ function SocietyDetail({ id }: { id: string }) {
           <ProposalsList data={d} isCommittee={isCommittee} />
         </div>
       )}
-      {tab === "Water" && <Water id={id} />}
     </div>
   );
 }
@@ -99,24 +98,3 @@ function Overview({ d }: { d: SocietyData }) {
   );
 }
 
-function Water({ id }: { id: string }) {
-  const { contracts } = useNest();
-  const orders = useOrders(id);
-  if (!contracts.tanker.address) return <Notice>TankerTrust is not deployed yet.</Notice>;
-  if (!orders.data) return <p className="text-sm text-slate-500">Loading water orders…</p>;
-  return (
-    <div className="space-y-3">
-      <p className="text-sm text-slate-600">Order water with a &quot;Order a water tanker&quot; proposal. The supplier is paid per litre the sealed sump sensor signs for.</p>
-      {!orders.data.length && <p className="text-sm text-slate-500">No water orders yet.</p>}
-      {orders.data.map((o) => (
-        <div key={String(o.id)} className="card flex flex-wrap items-center justify-between gap-2 text-sm">
-          <div>
-            <p className="font-medium">Order #{String(o.id)}: {o.litresOrdered} L ordered{o.status === 2 && `, ${o.delivered} L delivered (${Math.min(100, Math.round((o.delivered / o.litresOrdered) * 100))}%)`}</p>
-            <p className="text-xs text-slate-600">Supplier <AddressLink address={o.supplier} /> · escrow <Amount wei={o.escrowed} inline /></p>
-          </div>
-          <StatusChip kind="order" value={o.status} enumValues={OrderStatus} />
-        </div>
-      ))}
-    </div>
-  );
-}

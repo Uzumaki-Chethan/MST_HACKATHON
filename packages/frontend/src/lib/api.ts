@@ -107,7 +107,7 @@ export type TimelineEntry = {
   blockNumber: number;
   timestamp: number;
 };
-export type TimelineContract = "rental" | "milestone" | "ledger" | "tanker" | "dispute";
+export type TimelineContract = "rental" | "milestone" | "ledger" | "dispute";
 export const getTimeline = (contract: TimelineContract, id: string | number) =>
   request<TimelineEntry[]>(`/timeline/${contract}/${id}`);
 export const getMyFeed = () => request<TimelineEntry[]>("/me/feed");
@@ -141,9 +141,6 @@ export const getPublicPassport = (address: string) => request<PublicPassport>(`/
 
 // --- misc
 export const gasDrip = () => post<{ txHash: Hex }>("/gas/drip", {});
-export const iotSimulate = (device: Hex, orderId: string, phase: 0 | 1, litres: number) =>
-  post<{ txHash: Hex }>("/iot/simulate", { device, orderId, phase, litres });
-export const iotStreamUrl = (device: string) => `${API_URL}/iot/stream/${device}`;
 export type Health = {
   rpcOk: boolean;
   block: number;

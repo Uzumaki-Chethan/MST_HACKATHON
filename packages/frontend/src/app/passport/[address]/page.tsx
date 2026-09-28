@@ -25,7 +25,7 @@ const GROUPS: { title: string; stats: [StatName, string][] }[] = [
   { title: "As a contractor", stats: [["MilestonesApproved", "Milestones approved"], ["MilestonesOnTime", "On time"], ["MilestonesLate", "Late"], ["ProjectsCompleted", "Projects completed"], ["ProjectsAbandoned", "Projects abandoned"]] },
   { title: "As a payer", stats: [["PromptDecisions", "Decided within the window"], ["SilentDecisions", "Let the window lapse"]] },
   { title: "Disputes", stats: [["DisputesWon", "Won"], ["DisputesLost", "Lost"]] },
-  { title: "As a vendor or supplier", stats: [["InvoicesPaid", "Invoices paid"], ["InvoicesFlagged", "Invoices flagged by the AI"], ["Deliveries", "Water deliveries"]] },
+  { title: "As a vendor", stats: [["InvoicesPaid", "Invoices paid"], ["InvoicesFlagged", "Invoices flagged by the AI"]] },
   { title: "As a committee member", stats: [["CommitteeVotes", "Approvals given"], ["FlagOverrides", "AI flags overridden (with a written reason)"]] },
 ];
 
@@ -59,8 +59,6 @@ function Passport({ address }: { address: `0x${string}` }) {
   const t = TIERS[Number(tier.data)] ?? TIERS[0];
   const value = (s: StatName) => Number((stats.data as readonly number[])[Stat.indexOf(s)] ?? 0);
   const kinds = pub.data ? (Object.keys(Kind) as KindName[]).filter((k) => pub.data!.kinds & Kind[k]) : [];
-  const deliveries = value("Deliveries");
-  const avgAccuracy = deliveries ? (value("DeliveryAccuracyBpsSum") / deliveries / 100).toFixed(1) : null;
 
   return (
     <div className="space-y-6">
@@ -103,9 +101,6 @@ function Passport({ address }: { address: `0x${string}` }) {
                 {rows.map(([label, v]) => (
                   <div key={label} className="flex justify-between gap-2"><dt className="text-slate-600">{label}</dt><dd className="font-medium tabular-nums">{v}</dd></div>
                 ))}
-                {g.title.startsWith("As a vendor") && avgAccuracy && (
-                  <div className="flex justify-between gap-2"><dt className="text-slate-600">Average delivery accuracy</dt><dd className="font-medium">{avgAccuracy}%</dd></div>
-                )}
               </dl>
             </div>
           );

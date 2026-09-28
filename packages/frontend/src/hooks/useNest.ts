@@ -9,7 +9,6 @@ import {
   nestRegistryAbi,
   rentalEscrowAbi,
   societyLedgerAbi,
-  tankerTrustAbi,
   type ContractName,
 } from "@nestledger/shared";
 import { appChain } from "@/lib/wagmi";
@@ -28,7 +27,6 @@ export const nestContracts = {
   milestone: contract("MilestoneEscrow", milestoneEscrowAbi),
   resolver: contract("DisputeResolver", disputeResolverAbi),
   ledger: contract("SocietyLedger", societyLedgerAbi),
-  tanker: contract("TankerTrust", tankerTrustAbi),
 };
 
 export function useNest() {

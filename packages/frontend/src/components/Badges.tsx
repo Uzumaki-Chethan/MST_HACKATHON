@@ -19,8 +19,8 @@ export function RoleBadge({ role }: { role: string }) {
 }
 
 /** SPEC §8.6 rule 4: anything automated or simulated carries a badge. */
-export function SimulatedBadge({ what }: { what: "Keeper" | "AI agent" | "Simulated device" | "Scripted actor" | "AI: fixture mode" }) {
-  const simulated = what === "Simulated device" || what === "Scripted actor" || what === "AI: fixture mode";
+export function SimulatedBadge({ what }: { what: "Keeper" | "AI agent" | "Scripted actor" | "AI: fixture mode" }) {
+  const simulated = what === "Scripted actor" || what === "AI: fixture mode";
   return (
     <span className={`chip ${simulated ? "bg-purple-100 text-purple-800" : "bg-sky-100 text-sky-800"}`} title={simulated ? "Simulated for the demo" : "Automated"}>
       {simulated ? "◇ " : "⚙ "}
