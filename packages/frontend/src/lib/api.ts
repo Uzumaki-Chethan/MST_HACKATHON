@@ -100,6 +100,7 @@ export const aiInvoicePreview = (societyId: string, bundleHash: Hex, payee: Hex,
 
 // --- indexer-backed reads
 export type TimelineEntry = {
+  contract?: string;
   name: string;
   args: Record<string, string | string[]>;
   txHash: Hex;
@@ -125,8 +126,18 @@ export const getCaptureSession = (token: string) =>
 export const getPublicSociety = (id: string | number) => request<Record<string, unknown>>(`/public/societies/${id}`);
 export const getPublicSocietyLedger = (id: string | number, cursor?: string) =>
   request<Record<string, unknown>>(`/public/societies/${id}/ledger${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`);
-export const getPublicPassport = (address: string) =>
-  request<{ stats: number[]; tier: number; score: number; recent: TimelineEntry[] }>(`/public/passport/${address}`);
+export type PublicPassport = {
+  address: string;
+  hasPassport: boolean;
+  verified: boolean;
+  kinds: number;
+  registeredAt: number;
+  tier: number;
+  score: number;
+  stats: Record<string, number>;
+  recent: (TimelineEntry & { contract: string })[];
+};
+export const getPublicPassport = (address: string) => request<PublicPassport>(`/public/passport/${address}`);
 
 // --- misc
 export const gasDrip = () => post<{ txHash: Hex }>("/gas/drip", {});
