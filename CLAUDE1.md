@@ -27,7 +27,7 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
-- 2026-09-29 — **The public site is back up with NEW tunnel URLs** (the previous session's servers stopped when it closed). The old URLs are dead.
+- 2026-09-29 — **The public site is back up with NEW tunnel URLs** (the previous session's servers stopped when it closed). Use only these; the old frontend URL still loads but can't sign in or call the backend (its origin is no longer in CORS/SIWE).
   - **Frontend:** https://somebody-manufacture-back-olympus.trycloudflare.com (`/public/society/1`, `/status`)
   - **Backend:** https://phrases-considerable-marijuana-chess.trycloudflare.com (`/health`)
   - Checked live: all return 200, `/health` has `rpcOk: true`, indexer lag 0, `llm: fixtures`. `/public/societies/1` shows Green Meadows with a ₹11,950 balance and 6 flats. CORS allows the new frontend origin, and the frontend bundle has the new backend URL built in. Same seeded DB, same v2 addresses.
