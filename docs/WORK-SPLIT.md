@@ -52,9 +52,8 @@ Shared files that both laptops may touch: `docs/SPEC-CHANGES.md` (only append) a
 | `lap1/d1-indexer`: indexer, `/timeline`, `/public/*`, `/me/*`, `/gas/drip` | `lap2/c2-rental-disputes`: move-out, claim builder, tenant response, arbiter pages |
 | `lap1/d2-keeper`: keeper, capture sessions | `lap2/b3-milestone-invoice`: milestone + invoice AI tasks, fixtures |
 | `lap1/a2-dispute-milestone`: DisputeResolver, MilestoneEscrow | `lap2/c3-build-society-public`: build, society, public dashboard, passport, status |
-| `lap1/a3-society-tanker`: SocietyLedger, TankerTrust | |
+| `lap1/a3-society-tanker`: SocietyLedger + `/public/societies/*` (TankerTrust dropped) | |
 | `lap1/a4-deploy-seed`: testnet v2, verify, seed, actors | |
-| `lap1/d3-iot`: IoT firmware / simulator | |
 
 ### 1. Start a module
 ```bash

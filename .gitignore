@@ -13,7 +13,8 @@ coverage.json
 # next.js
 .next/
 out/
-build/
+/build/
+packages/*/build/
 
 # turbo
 .turbo/

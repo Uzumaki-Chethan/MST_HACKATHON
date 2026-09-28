@@ -6,11 +6,12 @@ export type ContractName =
 
 export const addresses: Record<number, Partial<Record<ContractName, `0x${string}`>>> = {
   31337: {
-    NestRegistry: "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44",
-    NestPassport: "0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f",
-    RentalEscrow: "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
-    MilestoneEscrow: "0xc5a5C42992dECbae36851359345FE25997F5C42d",
-    DisputeResolver: "0x7a2088a1bFc9d81c55368AE168C2C02570cB814F",
+    NestRegistry: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    NestPassport: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    RentalEscrow: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+    MilestoneEscrow: "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+    DisputeResolver: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+    SocietyLedger: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
   },
   91562037: {
     NestRegistry: "0x87d7eeDF89Aeec6551534F54b80D23911A30F2a5",
@@ -20,4 +21,4 @@ export const addresses: Record<number, Partial<Record<ContractName, `0x${string}
 };
 
 /** Block each chain's contracts were deployed at (indexer START_BLOCK). */
-export const DEPLOY_BLOCK: Record<number, number> = { 31337: 23, 91562037: 5787626 };
+export const DEPLOY_BLOCK: Record<number, number> = { 31337: 0, 91562037: 5787626 };
