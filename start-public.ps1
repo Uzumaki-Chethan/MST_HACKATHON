@@ -11,6 +11,7 @@ param(
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
 if (-not (Test-Path $Cloudflared)) { throw "cloudflared not found at $Cloudflared" }
+Get-Process cloudflared -ErrorAction SilentlyContinue | Stop-Process -Force -Confirm:$false  # old tunnels
 foreach ($port in 8080, 3000) {
   Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue |
     Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -Confirm:$false }
@@ -19,7 +20,7 @@ foreach ($port in 8080, 3000) {
 function Start-Tunnel([int]$port) {
   $log = Join-Path $env:TEMP "nestledger-tunnel-$port.log"
   if (Test-Path $log) { Remove-Item $log }
-  Start-Process -FilePath $Cloudflared -ArgumentList "tunnel --no-autoupdate --url http://localhost:$port" `
+  Start-Process -FilePath $Cloudflared -ArgumentList "tunnel --no-autoupdate --protocol http2 --url http://localhost:$port" `
     -RedirectStandardError $log -WindowStyle Minimized | Out-Null
   for ($i = 0; $i -lt 60; $i++) {
     Start-Sleep -Seconds 1
