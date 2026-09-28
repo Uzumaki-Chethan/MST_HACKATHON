@@ -15,7 +15,7 @@ export type Proposal = {
   month: number; resultRef: bigint; data: `0x${string}`;
 };
 
-export const KIND_TEXT = ["Pay a vendor", "Fund a works project", "Decide on a works milestone", "Order a water tanker"] as const;
+export const KIND_TEXT = ["Pay a vendor", "Fund a works project", "Decide on a works milestone", "Water tanker order (not supported)"] as const; // index = on-chain ProposalKind; TankerOrder reverts
 
 export const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 export const sameAddr = (a?: string, b?: string) => !!a && !!b && a.toLowerCase() === b.toLowerCase();

@@ -14,9 +14,7 @@ export const DEMO_CAST: CastMember[] = [
   { alias: "C5", role: "Committee, owner of D-103", address: "0x8CA9EC72aaFA6121F2569C27a8A9EC033B2841C7", scripted: true },
   { alias: "IMRAN", role: "Contractor", address: "0x37AB6f674c64D74EF6e7E1B04f1E3877E6A7D433" },
   { alias: "PLUMBER", role: "Vendor", address: "0x509ebe80b4E77d77F919C357Ef291d6b789FD360" },
-  { alias: "TANKER", role: "Water supplier", address: "0xeD2327C4380ceD8c1aa3a564CE273e64df0eC648" },
   { alias: "ARB1", role: "Arbiter", address: "0xce8485c91627e185dA92fdEc17b17f83b7a6007D" },
   { alias: "ARB2", role: "Arbiter", address: "0x3DBD77b681C4c97642db780fbE50c113A5c40Ce3", scripted: true },
   { alias: "ARB3", role: "Arbiter", address: "0x7F36FE5864DE83ceED6E99F57a45627629E05d70", scripted: true },
-  { alias: "DEVICE_1", role: "Sump sensor", address: "0x375D03eA0d31F8f987e0d41044ca980065541b2E" },
 ];

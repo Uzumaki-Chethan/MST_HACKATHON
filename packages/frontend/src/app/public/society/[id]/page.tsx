@@ -4,7 +4,7 @@
 // and from public backend data (invoices, AI reports, indexed events).
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { explorerAddress, formatINR, OrderStatus, ProposalStatus, weiToInr, ZERO_HASH } from "@nestledger/shared";
+import { explorerAddress, formatINR, ProposalStatus, weiToInr, ZERO_HASH } from "@nestledger/shared";
 import type { InvoiceDoc, Note } from "@nestledger/shared/schemas";
 import { Amount } from "@/components/Amount";
 import { StatusChip } from "@/components/Badges";
@@ -12,7 +12,7 @@ import { Countdown } from "@/components/Countdown";
 import { Notice } from "@/components/Gates";
 import { AddressLink, TxLink } from "@/components/TxLink";
 import { useNest } from "@/hooks/useNest";
-import { useOrders, useSocietyData, type ProposalRow, type SocietyData } from "@/hooks/useSociety";
+import { useSocietyData, type ProposalRow, type SocietyData } from "@/hooks/useSociety";
 import { getManifest, getTimeline, publicEvidenceUrl } from "@/lib/api";
 import { KIND_TEXT, paidThisMonth, ZERO_ADDR } from "@/lib/society";
 import { InvoiceFlag } from "@/app/society/[id]/proposals";
@@ -87,7 +87,6 @@ function Dashboard({ id, d, ledger }: { id: string; d: SocietyData; ledger: stri
         {open.map((p) => <OpenProposal key={String(p.id)} p={p} d={d} />)}
       </section>
 
-      <Water id={id} />
 
       <section className="card space-y-2">
         <h2 className="font-semibold text-slate-900">Maintenance this month</h2>
@@ -194,33 +193,3 @@ function OpenProposal({ p, d }: { p: ProposalRow; d: SocietyData }) {
   );
 }
 
-function Water({ id }: { id: string }) {
-  const { contracts } = useNest();
-  const orders = useOrders(id);
-  const settled = (orders.data ?? []).filter((o) => OrderStatus[o.status] === "Settled" || OrderStatus[o.status] === "Delivering" || OrderStatus[o.status] === "Open");
-  const events = useQueries({
-    queries: settled.map((o) => ({ queryKey: ["timeline", "tanker", String(o.id)], queryFn: () => getTimeline("tanker", String(o.id)), retry: false })),
-  });
-  if (!contracts.tanker.address) return null;
-  return (
-    <section className="card space-y-2">
-      <h2 className="font-semibold text-slate-900">Water deliveries</h2>
-      {!settled.length && <p className="text-sm text-slate-500">No tanker orders yet.</p>}
-      {settled.map((o, i) => {
-        const tx = events[i]?.data?.find((e) => e.name === "OrderSettled")?.txHash;
-        const accuracy = o.litresOrdered ? Math.min(100, Math.round((o.delivered / o.litresOrdered) * 100)) : 0;
-        return (
-          <div key={String(o.id)} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-            <span>
-              Order #{String(o.id)}: {o.litresOrdered} L ordered
-              {OrderStatus[o.status] === "Settled" ? <>, {o.delivered} L delivered · <span className={accuracy >= 98 ? "text-accent-dark" : "text-amber-700"}>{accuracy}% accurate</span></> : " (in progress)"}
-              {" "}· supplier <AddressLink address={o.supplier} />
-            </span>
-            {tx ? <TxLink hash={tx} /> : <StatusChip kind="order" value={o.status} enumValues={OrderStatus} />}
-          </div>
-        );
-      })}
-      <p className="text-xs text-slate-500">Litres are measured by a sealed sump sensor that signs each reading (demo scale ×100).</p>
-    </section>
-  );
-}

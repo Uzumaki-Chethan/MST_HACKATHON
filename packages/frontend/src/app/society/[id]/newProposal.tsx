@@ -21,7 +21,7 @@ const CATEGORIES: InvoiceDoc["category"][] = ["plumbing", "electrical", "cleanin
 const createProjectInputs = (milestoneEscrowAbi as readonly { type: string; name?: string; inputs?: readonly AbiParameter[] }[])
   .find((x) => x.type === "function" && x.name === "createProject")!.inputs!;
 
-type Kind = 0 | 1 | 2 | 3;
+type Kind = 0 | 1 | 2;
 
 export function NewProposal({ id, data }: { id: string; data: SocietyData }) {
   const [kind, setKind] = useState<Kind>(0);
@@ -30,7 +30,7 @@ export function NewProposal({ id, data }: { id: string; data: SocietyData }) {
     <div className="card space-y-4">
       <h3 className="font-semibold text-slate-900">New proposal (committee)</h3>
       <div className="flex flex-wrap gap-2">
-        {(["Pay a vendor", "Fund a works project", "Decide on a works milestone", "Order a water tanker"] as const).map((t, k) => (
+        {(["Pay a vendor", "Fund a works project", "Decide on a works milestone"] as const).map((t, k) => (
           <button key={t} className={k === kind ? "btn-primary" : "btn-secondary"} onClick={() => setKind(k as Kind)}>{t}</button>
         ))}
       </div>
@@ -40,7 +40,6 @@ export function NewProposal({ id, data }: { id: string; data: SocietyData }) {
       {kind === 0 && <PayVendor id={id} />}
       {kind === 1 && <FundWork id={id} preset={preset} setPreset={setPreset} />}
       {kind === 2 && <WorkDecision id={id} data={data} />}
-      {kind === 3 && <TankerOrder id={id} preset={preset} />}
     </div>
   );
 }
@@ -291,54 +290,3 @@ function WorkDecision({ id, data }: { id: string; data: SocietyData }) {
   );
 }
 
-// ---------------------------------------------------------------- TankerOrder
-
-function TankerOrder({ id, preset }: { id: string; preset: WindowPreset }) {
-  const { propose, pending, error, setError } = usePropose();
-  const [supplier, setSupplier] = useState("");
-  const [device, setDevice] = useState("");
-  const [litres, setLitres] = useState(500);
-  const [pricePerLitre, setPricePerLitre] = useState(2);
-  const priceWei = inrToWei(pricePerLitre);
-  const amount = priceWei * BigInt(litres);
-  const ok = isAddress(supplier) && isAddress(device) && litres > 0 && pricePerLitre > 0;
-
-  const submit = async () => {
-    setError(null);
-    try {
-      const note: Note = {
-        schema: "nestledger.note.v1", createdAt: new Date().toISOString(), purpose: "rationale",
-        text: `Water tanker order: ${litres} litres at ₹${pricePerLitre}/litre, measured by the sump sensor ${device}.`, refs: [`society:${id}`],
-      };
-      const { hash } = await postManifest(note);
-      const data = encodeAbiParameters(
-        [{ type: "uint32" }, { type: "uint128" }, { type: "address" }, { type: "uint32" }],
-        [litres, priceWei, device as `0x${string}`, WINDOWS[preset].deliveryWindow],
-      );
-      await propose("Propose tanker order", { societyId: id, kind: 3, payee: supplier, amount, docHash: hash, category: "water", data });
-    } catch (e) {
-      setError(describeError(e));
-    }
-  };
-
-  return (
-    <div className="space-y-3">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="block text-sm"><span className="text-slate-700">Water supplier wallet</span>
-          <input className={`${input} font-mono`} placeholder="0x…" value={supplier} onChange={(e) => setSupplier(e.target.value.trim())} /></label>
-        <label className="block text-sm"><span className="text-slate-700">Sump sensor device address</span>
-          <input className={`${input} font-mono`} placeholder="0x…" value={device} onChange={(e) => setDevice(e.target.value.trim())} /></label>
-        <label className="block text-sm"><span className="text-slate-700">Litres (demo scale)</span>
-          <input type="number" min={1} className={input} value={litres} onChange={(e) => setLitres(Number(e.target.value))} /></label>
-        <label className="block text-sm"><span className="text-slate-700">Price per litre (₹)</span>
-          <input type="number" min={0.01} step={0.01} className={input} value={pricePerLitre} onChange={(e) => setPricePerLitre(Number(e.target.value))} /></label>
-      </div>
-      <p className="text-xs text-slate-500">
-        Escrows <Amount wei={amount} inline /> (≈ ₹{weiToInr(amount).toLocaleString("en-IN")}). The supplier is paid only for litres the signed sensor measures
-        (full price within a 2% shortfall), and the rest comes back to the treasury.
-      </p>
-      {error && <p className="text-sm text-red-700">{error}</p>}
-      <button className="btn-primary w-full" disabled={!ok || pending} onClick={submit}>Propose the order</button>
-    </div>
-  );
-}
