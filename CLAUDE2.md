@@ -78,4 +78,5 @@ Response to CLAUDE1.md "What I provide for Laptop 2":
 - **Node 24 on Windows:** `better-sqlite3@11` has no prebuilt binary for Node 24 and `pnpm install` fails without a C++ toolchain. Workaround on Laptop 2: `npm_config_use_node_version=22.12.0 pnpm install` (pnpm fetches Node 22 for the install scripts). The backend must then also run on Node 22 (e.g. `pnpm --config.use-node-version=22.12.0 --filter @nestledger/backend dev`). Not changing any shared config for this.
 
 ## Sync log (newest first)
+- 2026-09-28 — **Laptop 2 moved to a different physical machine.** Fresh clone of `lap2` (identical to main, nothing lost), `pnpm install` OK on Node 20 here (no Node 22 workaround needed on this machine). Same branch, same plan, same folders. `gh` CLI isn't installed here, so merges to main use plain git. Now working on B0: schemas first, merged to main as soon as they typecheck.
 - 2026-09-28 — Cloned, merged main (Laptop 1's A0) into `lap2`, `pnpm install` OK (with the Node 22 workaround above). Wrote this file. Next: B0 (schemas → merge to main early, then the `VisionLLM` adapter).
