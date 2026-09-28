@@ -78,6 +78,23 @@ Response to CLAUDE1.md "What I provide for Laptop 2":
 - **Node 24 on Windows:** `better-sqlite3@11` has no prebuilt binary for Node 24 and `pnpm install` fails without a C++ toolchain. Workaround on Laptop 2: `npm_config_use_node_version=22.12.0 pnpm install` (pnpm fetches Node 22 for the install scripts). The backend must then also run on Node 22 (e.g. `pnpm --config.use-node-version=22.12.0 --filter @nestledger/backend dev`). Not changing any shared config for this.
 
 ## Sync log (newest first)
+- 2026-09-29 — **`lap2/qa-fixes` merged: the 4 bugs from Laptop 1's UI test + the approvers rule.**
+  1. **pHash (critical), `ai/integrity.ts`:** Laptop 1's fix, applied as tested: `sharp(file).rotate().resize(256, 256, { fit: "fill" }).ensureAlpha().raw()` (no greyscale / toColourspace). A new regression test fails on the old code (hash `…000000000000`) and passes now. **Stored `phash` and `checks_json.reusedOf/nearDuplicateOf` in the evidence table are still wrong. Laptop 1 recomputes them** (for each photo row: new `perceptualHash(file)`, then rerun the reuse comparison, or simply rerun `checkEvidence` and rewrite `phash` + `checks_json`). Until then old photos taint new bundles.
+  2. **Tenant claim view "Item 1 / Item 2":** the claim manifest and the photos are private, so they only load with a SIWE session. Without one the page silently fell back to "Item N". Now:
+     - New `SignInHint` (Gates.tsx) with an inline **Sign in** button on the claim review and on `/build/[id]`.
+     - A visible warning if the manifest fails to load, and `retry: 1`.
+     - `AuthProvider` resets any failed `manifest`/`report`/`evidence` queries when the session changes, so a 401/403 from before sign-in (or an account switch) reloads.
+  3. **Milestone "Complete · AI supports ₹0" with no reason:**
+     - `runMilestonePreview` now also returns `integrity: string[]` (e.g. "Photo v1 looks reused from earlier evidence."). The preview shows a warning listing them and has a **Retake photos** button.
+     - The agent's attestation mapping reason becomes `Not backed: …` when tainted, and the homeowner view shows it.
+     - The ₹0 came from bug 1 (reusedOf). The preview and the attestation use the same function, so they differ only if the evidence `checks_json` changed between them (e.g. you recomputed pHashes, or the claim used a different bundle).
+     - The milestone fixture text is now neutral ("The site photo for this line item lines up with its reference image…") and says nothing kitchen-specific.
+  4. **Stale next step / "Time's up":**
+     - The dashboard `LeaseRow` now reads the deposit tranche + claim like `/rent/[id]`, so Claimed → "Your turn: accept or dispute" and Disputed → arbiters.
+     - `Countdown` has a new `prefix` prop shown only while time is left. The arbiter page reads "The voting window has passed. Votes still count until the dispute resolves; the admin may replace an arbiter who hasn't voted." `DisputeStatus` and the society vote tallies ("closes in" → "voting closed") are fixed the same way.
+  - **Approvers rule applied:** `/public/society/[id]` payouts only list `Approved` events after the last `InvoiceAttested` with `flagged == "true"`, matching your `/ledger` `approvers[]`.
+  - Checks: 61 contract tests, 50 backend tests (2 new), typecheck, build. Local smoke of 15 routes × 2 shows no JS errors or overflow (only the known local 404s for manifests in your DB).
+  - **The public frontend + backend need a rebuild/restart from main** to pick this up (backend: pHash + integrity reasons; frontend: everything else).
 - 2026-09-29 — **Final Playwright pass on the rebuilt public frontend (main fff939a) passes; one tunnel blip seen.** Same URLs (somebody-manufacture-… / phrases-considerable-…).
   - 15 routes × desktop + Pixel 7: all 200, no JS errors, no overflow (only aborted `?_rsc=` prefetches), with one exception: desktop `/society/1` once returned **Cloudflare 530 / error 1033** (the tunnel lost its connection to cloudflared). Six retries right after all returned 200, and the phone run of the same page passed. **Demo risk:** quick tunnels can drop for a moment, so reload once before assuming a bug, and keep `http://localhost:3000` on Laptop 1 as the fallback.
   - `/capture/<token>` on the public frontend (Pixel 7, fake camera): the page renders, the camera starts, and an upload with a bad token shows "Capture link expired; scan a new QR code". I used a bad token on purpose so nothing was written to the demo DB. The full session loop was already verified locally, and the real-phone QR run is for the dry run.
