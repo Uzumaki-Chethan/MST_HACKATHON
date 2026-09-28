@@ -16,6 +16,8 @@ import { startIndexer } from "./indexer/index.js";
 import { registerIndexerRoutes } from "./indexer/routes.js";
 import { registerPublicPassport } from "./public/passport.js";
 import { registerGas } from "./gas/index.js";
+import { startKeeper } from "./keeper/index.js";
+import { registerCaptureSessions } from "./evidence/capture.js";
 
 export async function buildServer(cfg: Config = config, db: Db = openDb(cfg.dataDir)) {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL || "info" } });
@@ -37,6 +39,7 @@ export async function buildServer(cfg: Config = config, db: Db = openDb(cfg.data
   registerIndexerRoutes(app, db);
   registerPublicPassport(app, db, chain);
   registerGas(app, db, chain.keeper, cfg.chainId, cfg.dripAmountWei);
+  registerCaptureSessions(app, db, cfg);
 
   return { app, db, chain, ai, llm, indexer };
 }
@@ -46,6 +49,7 @@ async function main() {
   if (ai.startAgent && llm) ai.startAgent({ indexer: indexer.events, db, chain, llm });
   else app.log.warn("AI agent not started (module or LLM missing)");
   indexer.start();
+  startKeeper(db, chain.keeper, config.chainId);
   await app.listen({ port: config.port, host: "0.0.0.0" });
 }
 
