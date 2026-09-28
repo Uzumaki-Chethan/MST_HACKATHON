@@ -80,7 +80,16 @@ export async function fetchEvidenceObjectUrl(hash: string): Promise<string> {
 }
 export const publicEvidenceUrl = (hash: string) => `${API_URL}/evidence/${hash}`;
 
-export const postManifest = (manifest: { schema: string }) => post<{ hash: Hex }>("/manifests", manifest);
+// --- QR capture handoff (§8.4): the desktop opens a 30-min session, the phone uploads with X-Capture-Token
+export type CaptureSessionUpload = { hash: Hex; room: string | null; vantageId: string | null; checks: (EvidenceChecks & { phash?: string | null }) | null };
+export const createCaptureSession = (context: { type: string; id: string }, stage: string, template: string) =>
+  post<{ token: string; url: string }>("/capture-sessions", { context, stage, template });
+export const getCaptureSession = (token: string) =>
+  request<{ context: { type: string; id: string }; stage: string; template: string; expiresAt: string; uploads: CaptureSessionUpload[] }>(
+    `/capture-sessions/${token}`,
+  );
+
+export const postManifest =(manifest: { schema: string }) => post<{ hash: Hex }>("/manifests", manifest);
 export const getManifest = <T = unknown>(hash: string) => request<T>(`/manifests/${hash}`);
 export const getReport = <T = unknown>(hash: string) => request<T>(`/reports/${hash}`);
 
@@ -114,13 +123,6 @@ export const getMyFeed = () => request<TimelineEntry[]>("/me/feed");
 export const getMyFlats = () =>
   request<{ flatId: string; societyId: string; label: string; maintenanceWei: string }[]>("/me/flats");
 
-// --- capture sessions (P1)
-export const createCaptureSession = (context: EvidenceMeta["context"], stage: string, template: "full" | "compact") =>
-  post<{ token: string; url: string }>("/capture-sessions", { context, stage, template });
-export const getCaptureSession = (token: string) =>
-  request<{ uploads: { hash: Hex; room: string; vantageId: string; checks: EvidenceChecks }[] }>(
-    `/capture-sessions/${token}`,
-  );
 
 // --- public (no auth). Shapes owned by WP-D (CLAUDE1.md, A3); amounts are decimal wei strings, addresses lowercase.
 export type PublicSociety = {
