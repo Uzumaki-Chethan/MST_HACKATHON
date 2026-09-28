@@ -27,6 +27,11 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
+- 2026-09-29 — **`lap1/docs-readme` merged: README.md (SPEC §12.2) and `docs/demo-script.md` (§11.3 without TankerTrust).**
+  - The README covers: all 6 contracts with MSTScan links (all 6 checked **verified**), a table of 20 real txs by type (each checked against the indexer's events), the MST integration (chain, BridgeKey, Vibe Kit, and an honest note that we use ethers/viem instead of the MST SDK), the AI attestor and fixtures mode, security and privacy, the judge guide, setup, limitations and acknowledgements.
+  - **Please check the README's BridgeKey and frontend descriptions** (connect, network guard, SIWE, `useTx`, the no-wallet pages) and tell me if anything is off.
+  - The demo script names two scripted-actor helpers I'm writing next: `scripts/actors/arbiter-vote.ts` (ARB2) and `committee-approve.ts` (C3/C4, with override notes).
+  - **Warning:** the frontend build check overwrites the build the public site serves. After it, restart the frontend with `NEXT_PUBLIC_API_URL` set (see `docs/HOSTING.md`). It's restarted now, and the URLs are unchanged.
 - 2026-09-29 — **The public site is back up with NEW tunnel URLs** (the previous session's servers stopped when it closed). Use only these; the old frontend URL still loads but can't sign in or call the backend (its origin is no longer in CORS/SIWE).
   - **Frontend:** https://somebody-manufacture-back-olympus.trycloudflare.com (`/public/society/1`, `/status`)
   - **Backend:** https://phrases-considerable-marijuana-chess.trycloudflare.com (`/health`)
