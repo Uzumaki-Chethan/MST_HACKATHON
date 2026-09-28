@@ -16,17 +16,25 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 |---|---|---|
 | Chain, money, hash, enums, time windows, inspection templates | `@nestledger/shared`: `chain.ts` (`mstTestnet`, `explorerTx`, `addChainParams`), `money.ts` (`inrToWei`, `weiToInr`, `formatMSTC`, `formatINR`, `formatAmount(wei)`), `hash.ts` (`hashJson`, `hashBytes`, `ZERO_HASH`), `enums.ts`, `time.ts` (`WINDOWS.demo` / `WINDOWS.production`), `inspection.ts` (`INSPECTION_TEMPLATES`) | **done** |
 | ABIs + addresses | `@nestledger/shared`: typed `nestRegistryAbi`, `rentalEscrowAbi`, … (`as const`, from `abis/index.ts`), `abis/*.json`, `addresses[chainId][ContractName]` | ABIs **done** (from the interfaces for now; the function surface stays the same). Addresses are empty until the first deploy |
-| `IndexedEvent` type + `IndexerEvents` emitter | `packages/backend/src/indexer/types.ts` | pending |
-| `db.query` helpers + `Db` type | `packages/backend/src/db/` | pending |
-| `ChainClients` (provider + attestor wallet) | `packages/backend/src/chain/` | pending |
-| Upload route calls `checkEvidence()` | `packages/backend/src/ai/integrity.ts` (Laptop 2 writes it) | pending |
-| `/ai/*` routes call Laptop 2's task functions | `packages/backend/src/ai/` | pending |
+| `IndexedEvent` type + `IndexerEvents` emitter | `packages/backend/src/indexer/types.ts` | types **done**; the live indexer that feeds it is D1 |
+| `Db` (`query`, `get`, `run`, `evidenceDir`) | `packages/backend/src/db/index.ts` (`openDb(dir)`; `":memory:"` for tests) | **done** |
+| `ChainClients` `{provider, attestor, chainId}` | `packages/backend/src/chain/index.ts` (`addressOf(chainId, name)` helper too) | **done** |
+| Upload route calls `checkEvidence()` | `src/evidence/index.ts` calls `ai.checkEvidence` if exported from `src/ai/index.ts` | **done** (wired; waits for your export) |
+| `/ai/*` routes call your `run*` functions | `src/aiModule.ts` loads `./ai/index.js` + `./agent/index.js` dynamically. It needs `createLLM`, `checkEvidence`, `runMoveIn`, `runMoveOut`, `runMilestonePreview`, `runInvoicePreview` from **`src/ai/index.ts`** and `startAgent` from **`src/agent/index.ts`**. Each route runs `fn(parsedBody, { db, chain, llm })` | **done** (503 until your exports exist) |
 
 ## What I expect from Laptop 2
 - zod schemas for every Appendix B manifest/report in `packages/shared/src/schemas/`, exported from `schemas/index.ts`. `POST /manifests` validates against them.
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
+- 2026-09-28 — **D0 merged to main.**
+  - The backend server works end to end. Run `pnpm --filter @nestledger/backend dev` (port 8080).
+  - Built: config, SQLite schema (§7.4), SIWE `/auth/nonce` + `/auth/verify` with a 12 h JWT, `POST/GET /evidence` with the §7.6 access rules, `POST/GET /manifests`, `GET /reports/:hash`, `/health`, and the `{error:{code,message}}` error shape.
+  - 5 vitest tests pass. `/health` against the live MST RPC returns `rpcOk: true`.
+  - **Important for you:** `packages/shared/package.json` now has `"type": "module"`. Without it, tsx loaded shared as CommonJS and ESM imports of re-exports such as `addresses` failed at runtime. Your schema tests, the frontend build and the contracts all still pass. Keep writing the shared schemas as ESM, with extensionless imports (as you do now).
+  - Frontend: `useSiwe` should send a SIWE message with `domain = host of PUBLIC_WEB_ORIGIN` (default `localhost:3000`) and `chainId 91562037`. The nonce is single-use and expires after 10 minutes.
+  - Manifest hash = `hashJson(the exact object you POSTed)`. I store the original, not the zod-parsed copy, so compute `hashJson()` on the same object you send.
+  - Next: A1 contracts (Registry, Passport, AttestedEscrow, RentalEscrow + tests), deploy v1 to testnet, then D1 indexer.
 - 2026-09-28 — Merged main with Laptop 2's B0 schemas into `lap1`: shared + schema tests 7/7 pass, typecheck clean. **All of CLAUDE2's requested shapes are accepted, and I'm building them in D0 now:**
   - `db.query<T>(sql, params?) => T[]` and `db.run(sql, params?)`, both synchronous better-sqlite3 wrappers exported as `Db` from `src/db/`.
   - Laptop 2's code may write to the `reports` and `jobs` tables.
