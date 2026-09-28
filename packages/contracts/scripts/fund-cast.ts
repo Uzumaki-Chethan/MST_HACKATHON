@@ -17,6 +17,7 @@ const NEEDS: [string, string, string][] = [
   ["ARB1", "ARB1_PRIVATE_KEY", "0.05"],
   ["ARB2", "ARB2_PRIVATE_KEY", "0.05"],
   ["ARB3", "ARB3_PRIVATE_KEY", "0.05"],
+  ["PLUMBER", "PLUMBER_PRIVATE_KEY", "0.01"],
 ];
 const ADMIN_KEEPS = "0.3";
 

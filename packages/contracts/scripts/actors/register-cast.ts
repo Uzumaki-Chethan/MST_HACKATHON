@@ -20,6 +20,7 @@ const CAST: [string, string, number][] = [
   ["ARB1", "ARB1_PRIVATE_KEY", 128],
   ["ARB2", "ARB2_PRIVATE_KEY", 128],
   ["ARB3", "ARB3_PRIVATE_KEY", 128],
+  ["PLUMBER", "PLUMBER_PRIVATE_KEY", 16],
 ];
 
 async function main() {
