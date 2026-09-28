@@ -7,7 +7,8 @@ import { StatusChip } from "@/components/Badges";
 import { Countdown } from "@/components/Countdown";
 import { Notice, RequireWallet } from "@/components/Gates";
 import { useNest } from "@/hooks/useNest";
-import { nextStep, roleOf, type LeaseView } from "@/lib/lease";
+import { nextStep, roleOf, type LeaseView, type Tranche } from "@/lib/lease";
+import { useClaimState } from "@/app/rent/[id]/moveout";
 
 const TIERS = ["Tier 0 (unverified)", "Tier 1 (verified)", "Tier 2 (25% smaller deposits)", "Tier 3 (50% smaller deposits)"];
 
@@ -83,10 +84,21 @@ function LeaseRow({ id, viewer }: { id: bigint; viewer: `0x${string}` }) {
     address: contracts.rental.address!, abi: contracts.rental.abi, functionName: "getLease", args: [id],
     query: { refetchInterval: 4000 },
   });
+  // During move-out the next step depends on the deposit tranche (open → claimed → disputed), same as /rent/[id].
+  const tranche = useReadContract({
+    address: contracts.rental.address!, abi: contracts.rental.abi, functionName: "getTranche", args: [id, 0],
+    query: { refetchInterval: 4000 },
+  });
+  const claimState = useClaimState(String(id));
   if (!lease.data) return <li className="text-sm text-slate-500">Lease #{String(id)}…</li>;
   const l = lease.data as unknown as LeaseView;
+  const t = tranche.data as unknown as Tranche | undefined;
   const me = roleOf(l, viewer);
-  const step = nextStep(l, Math.floor(Date.now() / 1000));
+  const step = nextStep(l, Math.floor(Date.now() / 1000), t && {
+    status: t.status,
+    claimDeadline: Number(t.claimDeadline),
+    respondBy: claimState.claim && claimState.responseWindow !== undefined ? Number(claimState.claim.submittedAt) + claimState.responseWindow : undefined,
+  });
   const myTurn = step.who === me || step.who === "anyone";
   return (
     <li className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-slate-200 p-3">

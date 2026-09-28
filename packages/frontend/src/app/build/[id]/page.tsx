@@ -5,7 +5,7 @@ import { ProjectStatus, TrancheStatus } from "@nestledger/shared";
 import { Amount } from "@/components/Amount";
 import { StatusChip } from "@/components/Badges";
 import { DisputeStatus } from "@/components/DisputeStatus";
-import { Notice, RequireDeployed } from "@/components/Gates";
+import { Notice, RequireDeployed, SignInHint } from "@/components/Gates";
 import { Timeline } from "@/components/Timeline";
 import { AddressLink } from "@/components/TxLink";
 import { useNest } from "@/hooks/useNest";
@@ -60,6 +60,8 @@ function ProjectDetail({ id }: { id: string }) {
         </div>
         {society && <p className="text-xs text-slate-500">The society committee approves, reworks or disputes this project&apos;s milestones through WorkDecision proposals on the society page.</p>}
       </header>
+
+      {role && <SignInHint what="the line items, reference images, site photos and the AI's findings" />}
 
       <section className="card space-y-2">
         <h2 className="font-semibold text-slate-900">Milestones</h2>

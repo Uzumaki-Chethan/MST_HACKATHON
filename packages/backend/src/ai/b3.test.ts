@@ -141,6 +141,11 @@ describe("runMilestonePreview (fixtures)", () => {
     const bundleHash = await setupMilestone(true);
     const r = await runMilestonePreview({ projectId: "7", milestoneIndex: 1, bundleHash }, deps);
     expect(r.supportedPreview).toEqual(["0", "0", "0"]);
+    // …and says why, so the UI never shows "Complete · AI supports ₹0" without a reason.
+    expect(r.integrity.length).toBeGreaterThan(0);
+    expect(r.integrity.join(" ")).toMatch(/reused/);
+    const clean = await runMilestonePreview({ projectId: "7", milestoneIndex: 1, bundleHash: await setupMilestone() }, deps);
+    expect(clean.integrity).toEqual([]);
   });
 });
 

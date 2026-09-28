@@ -144,7 +144,7 @@ export async function attestMilestoneClaim(e: IndexedEvent, deps: Omit<AgentDeps
     return null;
   }
   // runMilestonePreview returns the stored report (the contractor's preview) when bundle and spec match.
-  const { report, reportHash, supportedPreview } = await runMilestonePreview(
+  const { report, reportHash, supportedPreview, integrity } = await runMilestonePreview(
     { projectId: id, milestoneIndex: idx, bundleHash: claim.data.photosBundleHash },
     deps,
   );
@@ -164,7 +164,9 @@ export async function attestMilestoneClaim(e: IndexedEvent, deps: Omit<AgentDeps
       const line = report.lineItems.find((l) => l.index === i);
       return {
         item: i, ref: `line-${i}`, supportedWei: s.toString(),
-        reason: line ? `${line.status.replace("_", " ")}: ${line.evidence}` : "Not assessed.",
+        reason: integrity.length
+          ? `Not backed: ${integrity.join(" ")}`
+          : line ? `${line.status.replace("_", " ")}: ${line.evidence}` : "Not assessed.",
       };
     }),
     score: report.scoreUsed,

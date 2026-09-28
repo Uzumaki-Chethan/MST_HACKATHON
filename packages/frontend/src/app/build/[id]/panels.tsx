@@ -96,7 +96,7 @@ export function OpenMilestone({ id, idx, t, role }: { id: string; idx: number; t
   const ghosts = useReferenceUrls(spec.data);
   const [open, setOpen] = useState(false);
   const [bundleHash, setBundleHash] = useState<`0x${string}` | null>(null);
-  const [preview, setPreview] = useState<{ report: MilestoneReport; reportHash: `0x${string}`; supportedPreview: string[] } | null>(null);
+  const [preview, setPreview] = useState<Awaited<ReturnType<typeof aiMilestonePreview>> | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const m = contracts.milestone;
@@ -173,9 +173,19 @@ export function OpenMilestone({ id, idx, t, role }: { id: string; idx: number; t
       )}
       {busy && <p className="text-sm text-slate-600">The AI is comparing your photos with the design…</p>}
       {error && <p className="text-sm text-red-700">{error}</p>}
+      {preview && !!preview.integrity?.length && (
+        <Notice tone="warn">
+          <p className="font-medium">The AI backs ₹0 of this claim because a photo failed the integrity checks:</p>
+          <ul className="list-disc pl-5">{preview.integrity.map((x) => <li key={x}>{x}</li>)}</ul>
+          <p className="mt-1">Retake the photo set live in the app to get AI backing. You can still claim; unbacked items go to arbiters if the homeowner stays silent.</p>
+        </Notice>
+      )}
       {preview && <ReportView report={preview.report} caps={t.itemCaps} supported={preview.supportedPreview.map((s) => BigInt(s))} spec={spec.data} />}
       {bundleHash && !busy && (
-        <button className="btn-primary w-full" disabled={pending} onClick={claim}>Claim the milestone&apos;s line items</button>
+        <div className="flex flex-wrap gap-2">
+          <button className="btn-primary flex-1" disabled={pending} onClick={claim}>Claim the milestone&apos;s line items</button>
+          <button className="btn-secondary" disabled={pending} onClick={() => { setBundleHash(null); setPreview(null); setError(null); }}>Retake photos</button>
+        </div>
       )}
     </section>
   );
@@ -183,8 +193,10 @@ export function OpenMilestone({ id, idx, t, role }: { id: string; idx: number; t
 
 // ---------------------------------------------------------------- claimed: homeowner decides
 
-function ReportView({ report, caps, supported, spec, backedMask }: {
+function ReportView({ report, caps, supported, spec, backedMask, notBackedReason }: {
   report: MilestoneReport; caps: readonly bigint[]; supported?: readonly bigint[]; spec?: MilestoneSpec; backedMask?: number;
+  /** The agent's reason when an integrity check zeroed every item (its mapping reason starts "Not backed:"). */
+  notBackedReason?: string;
 }) {
   return (
     <div className="space-y-3">
@@ -207,6 +219,7 @@ function ReportView({ report, caps, supported, spec, backedMask }: {
                 <Amount wei={cap} inline />{supported && <> · AI supports <Amount wei={supported[i] ?? BigInt(0)} inline /></>}
               </p>
               {line?.evidence && <p className="text-xs text-slate-500">{line.evidence}</p>}
+              {notBackedReason && <p className="text-xs text-amber-700">{notBackedReason}</p>}
               {line?.discrepancies.map((d) => <p key={d.description} className={`text-xs ${d.severity === "major" ? "text-red-700" : "text-amber-700"}`}>{d.severity === "major" ? "Major" : "Minor"}: {d.description}</p>)}
               {backedMask !== undefined && (
                 <p className={`text-xs font-medium ${bit(backedMask, i) ? "text-accent-dark" : "text-red-700"}`}>
@@ -237,7 +250,7 @@ export function ClaimedMilestone({ id, idx, t, a, role }: { id: string; idx: num
   const spec = useSpec(t.specHash);
   const manifest = useQuery({
     queryKey: ["manifest", claim?.evidenceHash], queryFn: () => getManifest<MilestoneClaim>(claim!.evidenceHash),
-    enabled: !!session && !!claim, retry: false,
+    enabled: !!session && !!claim, retry: 1,
   });
   const attested = !!att && att.attestedAt > BigInt(0);
   const wrapper = useReport<AttestationReport>(attested ? att!.reportHash : null);
@@ -288,7 +301,8 @@ export function ClaimedMilestone({ id, idx, t, a, role }: { id: string; idx: num
       )}
 
       {report.data ? (
-        <ReportView report={report.data} caps={claim.items} supported={attested ? att!.supported : undefined} spec={spec.data} backedMask={backed !== undefined ? Number(backed) : undefined} />
+        <ReportView report={report.data} caps={claim.items} supported={attested ? att!.supported : undefined} spec={spec.data} backedMask={backed !== undefined ? Number(backed) : undefined}
+          notBackedReason={wrapper.data?.mapping.find((x) => x.reason.startsWith("Not backed:"))?.reason} />
       ) : (
         <p className="text-sm text-slate-500">{session ? "Loading the AI check…" : "Sign in to see the photos and the AI check."}</p>
       )}

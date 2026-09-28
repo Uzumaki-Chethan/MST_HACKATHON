@@ -37,11 +37,11 @@ const GEOFENCE_M = 200;
 /** 64-bit blockhash of a greyscale, fixed-size copy of the image. Null for non-images. */
 export async function perceptualHash(file: Buffer): Promise<string | null> {
   try {
+    // blockhash reads RGBA (4 bytes per pixel) and sums R+G+B itself. Don't greyscale here: sharp then
+    // returns 1 channel and the hash comes out mostly zeros, so every photo looks "reused".
     const { data, info } = await sharp(file)
       .rotate()
-      .greyscale()
       .resize(256, 256, { fit: "fill" })
-      .toColourspace("srgb")
       .ensureAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });

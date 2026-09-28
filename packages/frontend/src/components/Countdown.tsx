@@ -21,11 +21,11 @@ export function useNow() {
 
 /**
  * Live timer to a unix-seconds deadline. At zero it renders `children`: the permissionless action
- * ("Finalize now") so nobody has to wait for the keeper.
+ * ("Finalize now") so nobody has to wait for the keeper. `prefix` ("closes in ") shows only while time is left.
  */
-export function Countdown({ until, children }: { until: number | bigint; children?: React.ReactNode }) {
+export function Countdown({ until, prefix, children }: { until: number | bigint; prefix?: React.ReactNode; children?: React.ReactNode }) {
   const target = Number(until);
   const left = target - useNow();
   if (left <= 0) return <>{children ?? <span className="text-sm text-slate-500">Time&apos;s up</span>}</>;
-  return <span className="font-mono text-sm tabular-nums text-slate-700">{fmt(left)}</span>;
+  return <>{prefix}<span className="font-mono text-sm tabular-nums text-slate-700">{fmt(left)}</span></>;
 }

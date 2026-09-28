@@ -72,23 +72,35 @@ export function milestoneSupport(report: MilestoneReport, caps: bigint[], tainte
   });
 }
 
-export function bundleTainted(deps: Pick<AiDeps, "db">, bundleHash: string): boolean {
+/** Why the photo set earns no AI support (SPEC §6.5), in plain words; empty when every photo passes. */
+export function integrityIssues(deps: Pick<AiDeps, "db">, bundleHash: string): string[] {
   try {
-    return loadPhotos(deps.db, loadBundle(deps.db, bundleHash)).some((p) => isTainted(p.checks));
+    return loadPhotos(deps.db, loadBundle(deps.db, bundleHash))
+      .filter((p) => isTainted(p.checks))
+      .map((p) => {
+        const c = p.checks!;
+        const why = [
+          c.reusedOf && "looks reused from earlier evidence",
+          c.fresh === false && "was not captured live within 5 minutes of upload",
+          c.stale && "has a missing or old photo time",
+        ].filter(Boolean).join(", ");
+        return `Photo ${p.item.vantageId ?? p.item.hash.slice(0, 10)} ${why}.`;
+      });
   } catch {
-    return true;
+    return ["The photo set could not be checked."];
   }
 }
 
 export async function runMilestonePreview(
   args: { projectId: string; milestoneIndex: number; bundleHash: string },
   deps: AiDeps,
-): Promise<{ report: MilestoneReport; reportHash: Hex32; supportedPreview: string[] }> {
+): Promise<{ report: MilestoneReport; reportHash: Hex32; supportedPreview: string[]; integrity: string[] }> {
   const onchain = await readMilestone(args.projectId, args.milestoneIndex, deps);
-  const tainted = bundleTainted(deps, args.bundleHash);
+  const integrity = integrityIssues(deps, args.bundleHash);
+  const tainted = integrity.length > 0;
   const existing = findReport<MilestoneReport>(deps.db, "milestone", args.projectId, "photosBundleHash", args.bundleHash);
   if (existing && existing.report.milestoneIndex === args.milestoneIndex && existing.report.specHash === onchain.specHash) {
-    return { ...existing, supportedPreview: milestoneSupport(existing.report, onchain.itemCaps, tainted).map(String) };
+    return { ...existing, supportedPreview: milestoneSupport(existing.report, onchain.itemCaps, tainted).map(String), integrity };
   }
 
   const spec = loadManifest(deps.db, onchain.specHash, MilestoneSpecSchema, "Milestone spec");
@@ -141,5 +153,5 @@ export async function runMilestonePreview(
     confidence: output.confidence,
   });
   const reportHash = storeReport(deps.db, { task: "milestone", report, contextType: "project", contextId: args.projectId });
-  return { report, reportHash, supportedPreview: milestoneSupport(report, onchain.itemCaps, tainted).map(String) };
+  return { report, reportHash, supportedPreview: milestoneSupport(report, onchain.itemCaps, tainted).map(String), integrity };
 }

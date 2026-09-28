@@ -14,6 +14,21 @@ export function RequireWallet({ children, signedIn = false }: { children: React.
   return <>{children}</>;
 }
 
+/** Inline prompt for pages that work without a session but need one for private evidence (descriptions, photos). */
+export function SignInHint({ what }: { what: string }) {
+  const { isConnected } = useAccount();
+  const { session, signIn, signingIn } = useAuth();
+  if (!isConnected || session) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-slate-700">
+      <span className="min-w-0 flex-1">Sign in to see {what}. It is a free signature, not a transaction.</span>
+      <button className="btn-secondary" disabled={signingIn} onClick={() => signIn().catch(() => undefined)}>
+        {signingIn ? "Signing in…" : "Sign in"}
+      </button>
+    </div>
+  );
+}
+
 /** Shown while the contracts have no address on this chain (before Laptop 1's deploy). */
 export function RequireDeployed({ address, name, children }: { address?: string; name: string; children: React.ReactNode }) {
   if (!address) {

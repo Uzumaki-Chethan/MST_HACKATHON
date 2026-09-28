@@ -8,7 +8,7 @@ import { DisputeStatus as DisputeStatusEnum } from "@nestledger/shared";
 import type { AttestationReport, MoveOutReport, Note, RentalClaim } from "@nestledger/shared/schemas";
 import { Amount } from "@/components/Amount";
 import { SimulatedBadge, StatusChip } from "@/components/Badges";
-import { Countdown } from "@/components/Countdown";
+import { Countdown, useNow } from "@/components/Countdown";
 import { BeforeAfter, useBeforeAfter, useReport } from "@/components/Evidence";
 import { Notice, RequireDeployed, RequireWallet } from "@/components/Gates";
 import { AddressLink } from "@/components/TxLink";
@@ -42,6 +42,7 @@ function DisputeDetail({ id }: { id: string }) {
   const { contracts } = useNest();
   const { session } = useAuth();
   const { send, pending } = useTx();
+  const now = useNow();
   const res = contracts.resolver;
   const d = useReadContract({ address: res.address!, abi: res.abi, functionName: "getDispute", args: [BigInt(id)], query: { refetchInterval: 4000 } });
   const x = d.data as unknown as Dispute | undefined;
@@ -55,7 +56,7 @@ function DisputeDetail({ id }: { id: string }) {
   const manifest = useQuery({
     queryKey: ["manifest", claim?.evidenceHash],
     queryFn: () => getManifest<RentalClaim>(claim!.evidenceHash),
-    enabled: !!session && !!claim, retry: false,
+    enabled: !!session && !!claim, retry: 1,
   });
   const moveOut = useReport<MoveOutReport>(manifest.data?.moveOutReportHash);
   const attested = !!att && att.attestedAt > BigInt(0);
@@ -106,7 +107,15 @@ function DisputeDetail({ id }: { id: string }) {
           Payer <AddressLink address={x.payer} />, payee <AddressLink address={x.payee} />.{" "}
           {x.bondPayer === "0x0000000000000000000000000000000000000000" ? "Escalated automatically because the payer stayed silent (no bond)." : <>Disputer posted a <Amount wei={x.bond} inline /> bond.</>}
         </p>
-        {x.status === 0 && <p className="text-sm text-slate-600">Voting closes in <Countdown until={x.voteDeadline} />.</p>}
+        {x.status === 0 && (
+          <p className="text-sm text-slate-600">
+            {Number(x.voteDeadline) > now ? (
+              <>Voting closes in <Countdown until={x.voteDeadline} />.</>
+            ) : (
+              <>The voting window has passed. Votes still count until the dispute resolves; the admin may replace an arbiter who hasn&apos;t voted.</>
+            )}
+          </p>
+        )}
       </header>
 
       <section className="space-y-3">

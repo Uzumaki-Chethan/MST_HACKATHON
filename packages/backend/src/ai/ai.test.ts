@@ -74,6 +74,21 @@ describe("checkEvidence", () => {
     expect(r.fresh).toBe(true);
   });
 
+  it("does not flag a different photo as reused (colour input gives a full-width hash)", async () => {
+    const scene = (svg: string) => sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300">${svg}</svg>`)).jpeg().toBuffer();
+    const a = await scene(`<rect width="400" height="300" fill="#c8b89a"/><rect x="0" y="0" width="200" height="300" fill="#3a5f8a"/>`);
+    const b = await scene(`<rect width="400" height="300" fill="#c8b89a"/><rect x="0" y="150" width="400" height="150" fill="#8a3a3a"/><circle cx="300" cy="80" r="50" fill="#222"/>`);
+    const [ha, hb] = [await perceptualHash(a), await perceptualHash(b)];
+    expect(ha).toMatch(/^[0-9a-f]{16}$/);
+    expect(ha!.slice(4)).not.toBe("000000000000");
+    await storePhoto(db, a, "living", "living-wide");
+    const r = await checkEvidence(b, { context: { type: "lease", id: "1", stage: "move-out" }, kind: "photo", captureMode: "live", capturedAt: now() },
+      { db, receivedAt: Date.now(), location: null });
+    expect(hb).not.toBe(ha);
+    expect(r.reusedOf).toBeUndefined();
+    expect(r.nearDuplicateOf).toBeUndefined();
+  });
+
   it("marks old live captures not fresh, applies the geofence, and tolerates non-images", async () => {
     const meta = {
       context: { type: "lease", id: "1", stage: "move-in" }, kind: "photo", captureMode: "live" as const,

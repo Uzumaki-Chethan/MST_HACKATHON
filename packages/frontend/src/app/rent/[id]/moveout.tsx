@@ -12,7 +12,7 @@ import { SimulatedBadge } from "@/components/Badges";
 import { CaptureWizard } from "@/components/CaptureWizard";
 import { Countdown } from "@/components/Countdown";
 import { BeforeAfter, photoByVantage, useBeforeAfter, useBundle, useReport } from "@/components/Evidence";
-import { Notice } from "@/components/Gates";
+import { Notice, SignInHint } from "@/components/Gates";
 import { useNest } from "@/hooks/useNest";
 import { useTx } from "@/hooks/useTx";
 import { aiMoveOut, fetchEvidenceObjectUrl, getManifest, postManifest } from "@/lib/api";
@@ -289,7 +289,7 @@ export function ClaimReview({ id, t, me }: { id: string; t: Tranche; me: "tenant
   const manifest = useQuery({
     queryKey: ["manifest", claim?.evidenceHash],
     queryFn: () => getManifest<RentalClaim>(claim!.evidenceHash),
-    enabled: !!session && !!claim, retry: false,
+    enabled: !!session && !!claim, retry: 1,
   });
   const moveOut = useReport<MoveOutReport>(manifest.data?.moveOutReportHash);
   const attested = !!att && att.attestedAt > BigInt(0);
@@ -313,6 +313,11 @@ export function ClaimReview({ id, t, me }: { id: string; t: Tranche; me: "tenant
         {attested && <span className="text-xs text-slate-500">AI score {att!.score}</span>}
       </div>
 
+      <SignInHint what="what each item is for, with the move-in and move-out photos" />
+      {manifest.isError && (
+        <Notice tone="warn">The claim details could not be loaded ({describeError(manifest.error)}). Amounts below are read from the contract.</Notice>
+      )}
+
       <div className="space-y-3">
         {claim.items.map((amount, i) => {
           const item = manifest.data?.items.find((x) => x.index === i);
@@ -325,7 +330,7 @@ export function ClaimReview({ id, t, me }: { id: string; t: Tranche; me: "tenant
             <div key={i} className={`rounded-md border p-3 ${bit(claim.disputedMask, i) ? "border-amber-300" : "border-slate-200"}`}>
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-slate-800">{i === 0 ? "Unpaid rent" : item?.description ?? `Item ${i}`}</p>
+                  <p className="text-sm font-medium text-slate-800">{i === 0 ? "Unpaid rent" : item?.description ?? (manifest.isLoading ? "Loading…" : `Item ${i}`)}</p>
                   <p className="text-xs text-slate-600">
                     Claimed <Amount wei={amount} inline />
                     {supported !== undefined && i > 0 && <> · AI supports <Amount wei={supported} inline /></>}
