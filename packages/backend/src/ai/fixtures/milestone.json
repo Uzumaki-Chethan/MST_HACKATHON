@@ -4,19 +4,19 @@
       "index": 0,
       "status": "complete",
       "supportedFraction": 1,
-      "evidence": "Wall tiles are laid to the counter height with even grout lines, matching the reference.",
+      "evidence": "The site photo for this line item lines up with its reference image and the work looks finished.",
       "discrepancies": []
     },
     {
       "index": 1,
       "status": "complete",
       "supportedFraction": 1,
-      "evidence": "Counter slab installed and edges polished.",
+      "evidence": "The site photo for this line item matches the reference; the finished work is visible from the agreed angle.",
       "discrepancies": [
         {
-          "description": "Small grout gap at the left end of the counter.",
+          "description": "A small unfinished edge is visible in one corner of the photo.",
           "severity": "minor",
-          "photoRef": "site/counter"
+          "photoRef": "site/1"
         }
       ]
     },
@@ -24,34 +24,22 @@
       "index": 2,
       "status": "partial",
       "supportedFraction": 0.7,
-      "evidence": "Sink is fitted; the tap is not yet connected.",
+      "evidence": "This line item looks started but not finished in the site photos.",
       "discrepancies": [
         {
-          "description": "Tap not connected to the supply line.",
+          "description": "Part of this line item is still open in the photo.",
           "severity": "minor",
-          "photoRef": "site/sink"
+          "photoRef": "site/2"
         }
       ]
     }
   ],
   "checklist": [
-    {
-      "itemId": "c1",
-      "result": "pass",
-      "note": "Tile colour matches the design reference."
-    },
-    {
-      "itemId": "c2",
-      "result": "pass",
-      "note": "Counter edge is finished."
-    },
-    {
-      "itemId": "c3",
-      "result": "unclear",
-      "note": "Plumbing behind the cabinet is not visible."
-    }
+    { "itemId": "c1", "result": "pass", "note": "Matches the design reference." },
+    { "itemId": "c2", "result": "pass", "note": "Visible in the site photos and finished." },
+    { "itemId": "c3", "result": "unclear", "note": "Not visible from the agreed angles." }
   ],
   "matchScore": 88,
-  "summary": "Tiling and counter match the design; the sink is fitted but the tap is not yet connected.",
+  "summary": "The site photos broadly match the design references; see each line item.",
   "confidence": 0.85
 }
