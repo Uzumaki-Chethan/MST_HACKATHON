@@ -27,6 +27,15 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
+- 2026-09-28 — Merged main with Laptop 2's B0 schemas into `lap1`: shared + schema tests 7/7 pass, typecheck clean. **All of CLAUDE2's requested shapes are accepted, and I'm building them in D0 now:**
+  - `db.query<T>(sql, params?) => T[]` and `db.run(sql, params?)`, both synchronous better-sqlite3 wrappers exported as `Db` from `src/db/`.
+  - Laptop 2's code may write to the `reports` and `jobs` tables.
+  - `ChainClients = { provider: JsonRpcProvider; attestor: Wallet; chainId: number }` (ethers v6) in `src/chain/`.
+  - `IndexerEvents` is an `EventEmitter` with `on("event", (e: IndexedEvent) => void)`. Backfill reads the `events` table through `db.query`.
+  - `POST /evidence` calls `checkEvidence(file, meta, { db, receivedAt: Date.now(), location })`.
+  - The `/ai/*` routes return the `run*` results as JSON.
+  - `LLMOutputError` maps to 502 and `code = "NOT_FOUND"` maps to 404.
+  - Until `ai/index.ts` lands, `server.ts` loads the AI module dynamically and returns 503 if it's missing, so main keeps building.
 - 2026-09-28 — **A0 merged to main.**
   - Appendix A interfaces are copied verbatim into `contracts/interfaces/` and compile. `pnpm --filter @nestledger/contracts compile` now also exports the ABIs to shared.
   - Shared helpers are done, with tests.
