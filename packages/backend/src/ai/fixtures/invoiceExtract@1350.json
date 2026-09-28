@@ -1,0 +1,19 @@
+{
+  "vendorName": "Sharma Plumbing Works (sample vendor)",
+  "vendorGSTIN": "29ABCDE1234F1Z5",
+  "invoiceNumber": "SPW-0427",
+  "invoiceDate": "2026-09-15",
+  "lineItems": [
+    {
+      "description": "Common bathroom drain unclogging",
+      "quantity": 1,
+      "unitPriceINR": 1144,
+      "amountINR": 1144
+    }
+  ],
+  "subtotalINR": 1144,
+  "taxINR": 206,
+  "totalINR": 1350,
+  "category": "plumbing",
+  "confidence": 0.9
+}
