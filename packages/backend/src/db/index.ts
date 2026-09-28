@@ -22,6 +22,10 @@ CREATE TABLE IF NOT EXISTS jobs      (key TEXT PRIMARY KEY, kind TEXT, status TE
                         last_error TEXT, tx_hash TEXT, updated_at INTEGER);
 CREATE TABLE IF NOT EXISTS drips     (address TEXT PRIMARY KEY, tx_hash TEXT, created_at INTEGER);
 CREATE TABLE IF NOT EXISTS telemetry (device TEXT, litres INTEGER, distance_mm INTEGER, ts INTEGER);
+-- QR capture handoff (P1, not in SPEC §7.4; see SPEC-CHANGES)
+CREATE TABLE IF NOT EXISTS capture_sessions (token TEXT PRIMARY KEY, creator TEXT, context_type TEXT, context_id TEXT,
+                        stage TEXT, template TEXT, expires_at INTEGER);
+CREATE TABLE IF NOT EXISTS capture_uploads (token TEXT, hash TEXT, created_at INTEGER, PRIMARY KEY (token, hash));
 `;
 
 export type Db = {

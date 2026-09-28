@@ -10,6 +10,7 @@ import { authUser, requireUser } from "../auth/index.js";
 import { badRequest, forbidden, notFound } from "../errors.js";
 import type { AiModule } from "../aiModule.js";
 import { canRead, contextIsPublic } from "./acl.js";
+import { assertInSession, captureSessionOf, recordCaptureUpload } from "./capture.js";
 
 export const MAX_EVIDENCE_BYTES = 10 * 1024 * 1024;
 
@@ -35,7 +36,9 @@ type EvidenceRow = {
 
 export function registerEvidence(app: FastifyInstance, db: Db, chain: ChainClients, ai: AiModule) {
   app.post("/evidence", async (req) => {
-    const user = requireUser(req);
+    // Phones in a QR capture session upload with X-Capture-Token instead of a wallet login.
+    const session = captureSessionOf(db, req);
+    const user = session ? session.creator : requireUser(req);
     let file: { buffer: Buffer; mime: string } | null = null;
     let metaRaw: string | null = null;
     for await (const part of req.parts({ limits: { fileSize: MAX_EVIDENCE_BYTES, files: 1 } })) {
@@ -50,10 +53,14 @@ export function registerEvidence(app: FastifyInstance, db: Db, chain: ChainClien
     if (!file) throw badRequest("Missing file");
     if (!metaRaw) throw badRequest("Missing meta");
     const meta = EvidenceMetaSchema.parse(JSON.parse(metaRaw));
+    if (session) assertInSession(session, meta.context);
 
     const hash = hashBytes(file.buffer);
     const existing = db.get<EvidenceRow>("SELECT * FROM evidence WHERE hash = ?", [hash]);
-    if (existing) return toResponse(existing);
+    if (existing) {
+      if (session) recordCaptureUpload(db, session, hash);
+      return toResponse(existing);
+    }
 
     const filePath = path.join(db.evidenceDir, hash);
     fs.writeFileSync(filePath, file.buffer);
@@ -80,6 +87,7 @@ export function registerEvidence(app: FastifyInstance, db: Db, chain: ChainClien
       [row.hash, row.mime, row.size, row.path, row.phash, row.uploader, row.context_type, row.context_id,
         meta.context.stage, JSON.stringify(meta), row.checks_json, row.is_public, Date.now()],
     );
+    if (session) recordCaptureUpload(db, session, hash);
     return toResponse(row);
   });
 
