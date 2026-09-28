@@ -20,6 +20,7 @@ async function main() {
   for (const [name, info] of Object.entries(
     forNetwork as Record<string, { address: string; constructorArguments: unknown[] }>
   )) {
+    if (name.startsWith("_")) continue; // _meta
     console.log(`Verifying ${name} at ${info.address} on ${network}...`);
     try {
       await hre.run("verify:verify", {
