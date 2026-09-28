@@ -25,14 +25,23 @@ export function roleOf(lease: Pick<LeaseView, "landlord" | "tenant">, viewer?: s
   return null;
 }
 
-export function nextStep(l: LeaseView, now: number): NextStep {
+export type DepositState = { status: number; claimDeadline: number; respondBy?: number };
+
+export function nextStep(l: LeaseView, now: number, deposit?: DepositState): NextStep {
   const status = LeaseStatus[l.status];
   const baseline = BaselineStatus[l.baseline];
   const started = Number(l.startedAt);
   if (status === "Offered") return { who: "tenant", text: "Review the terms and sign; the deposit is locked in the contract." };
   if (status === "Cancelled") return { who: "nobody", text: "The offer was cancelled." };
   if (status === "Closed") return { who: "nobody", text: "The lease is closed and the deposit is settled." };
-  if (status === "MovingOut") return { who: "landlord", text: "Claim deductions or release the deposit in full." };
+  if (status === "MovingOut") {
+    const t = deposit ? ["Pending", "Open", "Claimed", "Disputed", "Settled", "Refunded"][deposit.status] : "Open";
+    if (t === "Claimed") {
+      return { who: "tenant", text: "Accept the landlord's claim or dispute specific items.", deadline: deposit?.respondBy, ifNot: "AI-backed items are paid and the rest go to arbiters" };
+    }
+    if (t === "Disputed") return { who: "nobody", text: "Three arbiters are voting on the disputed items. Everything else is already paid out." };
+    return { who: "landlord", text: "Claim deductions or release the deposit in full.", deadline: deposit?.claimDeadline, ifNot: "the full deposit is refunded to the tenant" };
+  }
   // Active
   if (baseline === "None") {
     const tenantDeadline = started + l.baselineWindow;
@@ -55,3 +64,24 @@ export function nextStep(l: LeaseView, now: number): NextStep {
   }
   return { who: "anyone", text: "All rent is paid. Either party can start move-out." };
 }
+
+/** RentalEscrow.getLease as viem decodes it. */
+export type Lease = LeaseView & {
+  flatId: bigint; societyId: bigint; rent: bigint; maintenance: bigint; deposit: bigint;
+  latePeriods: number; grace: number; claimWindow: number; baselineEvidence: `0x${string}`; baselineReport: `0x${string}`;
+  counterEvidence: `0x${string}`; moveOutEvidence: `0x${string}`; unpaidDues: bigint; termsHash: `0x${string}`;
+};
+
+export type Tranche = {
+  amount: bigint; advance: bigint; released: bigint; refunded: bigint; itemCaps: readonly bigint[];
+  duration: number; openedAt: bigint; claimDeadline: bigint; round: number; status: number; specHash: `0x${string}`;
+};
+
+export type Claim = {
+  items: readonly bigint[]; evidenceHash: `0x${string}`; submittedAt: bigint; round: number;
+  disputedMask: number; awardedMask: number; disputeId: bigint; late: boolean;
+};
+
+export type Attestation = { reportHash: `0x${string}`; supported: readonly bigint[]; score: number; attestedAt: bigint; attestor: `0x${string}` };
+
+export const bit = (mask: number, i: number) => (mask & (1 << i)) !== 0;

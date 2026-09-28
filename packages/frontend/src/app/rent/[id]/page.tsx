@@ -18,13 +18,8 @@ import { useTx } from "@/hooks/useTx";
 import { aiMoveIn, getManifest, getReport } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { describeError } from "@/lib/labels";
-import { nextStep, roleOf, type LeaseView } from "@/lib/lease";
-
-type Lease = LeaseView & {
-  flatId: bigint; societyId: bigint; rent: bigint; maintenance: bigint; deposit: bigint;
-  latePeriods: number; grace: number; claimWindow: number; baselineEvidence: `0x${string}`; baselineReport: `0x${string}`;
-  counterEvidence: `0x${string}`; unpaidDues: bigint; termsHash: `0x${string}`;
-};
+import { nextStep, roleOf, type Lease, type Tranche } from "@/lib/lease";
+import { ClaimReview, ClaimWindow, ClosedSummary, DisputeStatus, PaidSoFar, StartMoveOut, useClaimState } from "./moveout";
 
 export default function LeasePage({ params }: { params: { id: string } }) {
   const { contracts } = useNest();
@@ -48,13 +43,23 @@ function LeaseDetail({ id }: { id: string }) {
     address: contracts.rental.address!, abi: contracts.rental.abi, functionName: "getLease", args: [BigInt(id)],
     query: { refetchInterval: 4000 },
   });
+  const tranche = useReadContract({
+    address: contracts.rental.address!, abi: contracts.rental.abi, functionName: "getTranche", args: [BigInt(id), 0],
+    query: { refetchInterval: 4000 },
+  });
+  const claimState = useClaimState(id);
   if (lease.isError) return <Notice tone="error">Lease #{id} could not be loaded.</Notice>;
   if (!lease.data) return <p className="text-sm text-slate-500">Loading lease #{id}…</p>;
   const l = lease.data as unknown as Lease;
   if (l.landlord === "0x0000000000000000000000000000000000000000") return <Notice>There is no lease #{id}.</Notice>;
 
   const me = roleOf(l, address);
-  const step = nextStep(l, now);
+  const t = tranche.data as unknown as Tranche | undefined;
+  const step = nextStep(l, now, t && {
+    status: t.status,
+    claimDeadline: Number(t.claimDeadline),
+    respondBy: claimState.claim && claimState.responseWindow !== undefined ? Number(claimState.claim.submittedAt) + claimState.responseWindow : undefined,
+  });
 
   return (
     <div className="space-y-6">
@@ -89,7 +94,7 @@ function LeaseDetail({ id }: { id: string }) {
         )}
       </section>
 
-      <ActionPanel id={id} l={l} me={me} />
+      <ActionPanel id={id} l={l} t={t} me={me} />
 
       <section className="card space-y-3">
         <h2 className="font-semibold text-slate-900">On-chain history</h2>
@@ -108,15 +113,26 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function ActionPanel({ id, l, me }: { id: string; l: Lease; me: "tenant" | "landlord" | null }) {
+function ActionPanel({ id, l, t, me }: { id: string; l: Lease; t?: Tranche; me: "tenant" | "landlord" | null }) {
   const status = LeaseStatus[l.status];
   const baseline = BaselineStatus[l.baseline];
   const now = Math.floor(Date.now() / 1000);
 
   if (status === "Offered") return <OfferedPanel id={id} l={l} me={me} />;
-  if (status !== "Active") {
-    return <Notice>{status === "MovingOut" ? "Move-out is under way. The claim and response screens open in the next update." : "No actions left on this lease."}</Notice>;
+  if (status === "Cancelled") return <Notice>The offer was cancelled. No deposit was ever locked.</Notice>;
+  if (status === "MovingOut" || status === "Closed") {
+    if (!t) return <p className="text-sm text-slate-500">Loading the deposit…</p>;
+    const tranche = ["Pending", "Open", "Claimed", "Disputed", "Settled", "Refunded"][t.status];
+    return (
+      <div className="space-y-4">
+        {tranche === "Open" && <ClaimWindow id={id} l={l} t={t} me={me} />}
+        {(tranche === "Claimed" || tranche === "Disputed") && <ClaimReview id={id} t={t} me={me} />}
+        {tranche === "Disputed" && <><PaidSoFar t={t} /><DisputeStatus id={id} /></>}
+        {(tranche === "Settled" || tranche === "Refunded") && <ClosedSummary t={t} me={me} />}
+      </div>
+    );
   }
+  const termOver = l.paidPeriods >= l.periods || now >= Number(l.startedAt) + l.periods * l.period;
   return (
     <div className="space-y-4">
       {baseline === "None" && me && (me === "tenant" || now > Number(l.startedAt) + l.baselineWindow) && <DocumentMoveIn id={id} l={l} />}
@@ -125,9 +141,7 @@ function ActionPanel({ id, l, me }: { id: string; l: Lease; me: "tenant" | "land
       )}
       {baseline !== "None" && <BaselinePanel id={id} l={l} me={me} />}
       {me === "tenant" && l.paidPeriods < l.periods && <PayRentPanel id={id} l={l} />}
-      {(l.paidPeriods >= l.periods || now >= Number(l.startedAt) + l.periods * l.period) && (
-        <Notice>The term is over or fully paid. Move-out (with photo comparison against move-in) opens in the next update.</Notice>
-      )}
+      {termOver && me && <StartMoveOut id={id} l={l} />}
     </div>
   );
 }
