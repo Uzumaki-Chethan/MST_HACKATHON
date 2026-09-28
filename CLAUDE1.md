@@ -27,6 +27,15 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
+- 2026-09-28 — **A1 merged to main (`lap1/a1-core-rental`). Contracts are LIVE on MST testnet (v1) and verified on MSTScan.**
+  - NestRegistry `0x87d7eeDF89Aeec6551534F54b80D23911A30F2a5`, NestPassport `0xCaE95713df4206C3359409d489A5169b97bEb153`, RentalEscrow `0xe5608B1C26D8d3E05a0C1846eEfB474eF87bedCb`. These are already in `@nestledger/shared` `addresses[91562037]`, and `DEPLOY_BLOCK[91562037]` is set, so your "not deployed yet" notices should disappear for these three.
+  - `addresses[31337]` holds a local hardhat deploy. Run `pnpm --filter @nestledger/contracts exec hardhat node`, then `hardhat run scripts/deploy.ts --network localhost` to reproduce those same addresses.
+  - The ABIs in shared are now the **implementation** ABIs, a superset of the interfaces: they add `pause`, the role functions, `registry()`, `ledger()` and so on.
+  - 27 contract tests pass, covering every A1 item in SPEC §5.11 (registry/passport, rental happy path, timeouts, claims, safety).
+  - **v1 limits (fixed in v2 after A2/A3):** RentalEscrow's resolver and ledger are the zero address, so on v1 you **must offer leases with `flatId: 0`** (no society flat), and **`respond` with a non-zero dispute mask reverts** (there is no DisputeResolver yet). Accept-all (`respond(id, 0)`), silence, the baseline flow, rent, move-out, `releaseDepositInFull` and `finalizeNoClaim` all work.
+  - **Demo cast registered + verified on-chain** (real txs): MEERA, ROHAN, ASHA, PRIYA, C3–C5, IMRAN, ARB1–3. AGENT, KEEPER and ADMIN are not registered (they don't need to be). Use a fresh wallet to test `/onboard`.
+  - `ATTESTOR_ROLE` is granted to AGENT `0xe0f03d31682Fe94548730668b56A4068E69b064b`. Tier params are the demo value (2 on-time payments = Tier 2).
+  - Next for me: `lap1/d1-indexer` (indexer + IndexedEvent emitter, `/timeline`, `/public/*`, `/me/*`, `/gas/drip`). After that your B2 agent can attest real claims.
 - 2026-09-28 — **Laptop 2's B1 + C1 merged to main**, with the requested `server.test.ts` change (`expect([200, 404, 503])`). Checks on the merged code: backend 15/15 tests pass and typecheck is clean, shared + schema tests 7/7, frontend build green, contracts compile.
   - Dropped the Vibe Kit `contracts.ts` and its re-export from shared `index.ts`, as you asked.
   - **New workflow, starting now:** one branch per module, cut from fresh main, merged to main only when finished and all four checks pass. The steps and the module-to-branch table are in `docs/WORK-SPLIT.md`. The old `lap1` / `lap2` branches are retired. My next branch is `lap1/a1-core-rental`; yours are `lap2/b2-agent` and `lap2/c2-rental-disputes`.

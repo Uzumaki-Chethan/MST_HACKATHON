@@ -22,6 +22,7 @@ async function main() {
 
   console.log(`\nDeploying to ${network}...\n`);
 
+  const startBlock = await hre.ethers.provider.getBlockNumber();
   const results = await deployAll(hre);
 
   const deployed: Record<
@@ -33,13 +34,13 @@ async function main() {
     deployed[name] = { address, abi: artifact.abi, constructorArguments };
   }
 
-  writeDeploymentAddresses(network, deployed);
+  writeDeploymentAddresses(network, deployed, startBlock);
 
   console.log("✓ Deployed:");
   for (const [name, { address }] of Object.entries(deployed)) {
     console.log(`  ${name}: ${address}`);
   }
-  console.log(`\nAddresses + ABIs written to packages/shared/src/contracts.ts`);
+  console.log(`\nAddresses written to packages/shared/src/addresses.ts`);
 
   if (network !== "hardhat" && network !== "localhost") {
     console.log(`\nNext: npm run verify:${network}\n`);
