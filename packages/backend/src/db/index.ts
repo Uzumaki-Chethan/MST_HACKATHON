@@ -28,6 +28,8 @@ export type Db = {
   query<T = Record<string, unknown>>(sql: string, params?: unknown[]): T[];
   get<T = Record<string, unknown>>(sql: string, params?: unknown[]): T | undefined;
   run(sql: string, params?: unknown[]): { changes: number; lastInsertRowid: number | bigint };
+  /** Runs fn inside one SQLite transaction (all or nothing). */
+  transaction<T>(fn: () => T): T;
   /** Directory where evidence files are stored as DATA_DIR/evidence/{hash}. */
   evidenceDir: string;
   close(): void;
@@ -46,6 +48,7 @@ export function openDb(dataDir: string): Db {
     query: (sql, params = []) => sqlite.prepare(sql).all(...params) as never,
     get: (sql, params = []) => sqlite.prepare(sql).get(...params) as never,
     run: (sql, params = []) => sqlite.prepare(sql).run(...params),
+    transaction: (fn) => sqlite.transaction(fn)(),
     evidenceDir,
     close: () => sqlite.close(),
   };

@@ -1,5 +1,4 @@
 // One process: HTTP API + indexer + keeper + AI agent (SPEC §7).
-import { EventEmitter } from "node:events";
 import { pathToFileURL } from "node:url";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
@@ -13,7 +12,10 @@ import { registerEvidence, MAX_EVIDENCE_BYTES } from "./evidence/index.js";
 import { registerManifests } from "./manifests/index.js";
 import { registerHealth } from "./health.js";
 import { loadAiModule, registerAiRoutes } from "./aiModule.js";
-import type { IndexerEvents } from "./indexer/types.js";
+import { startIndexer } from "./indexer/index.js";
+import { registerIndexerRoutes } from "./indexer/routes.js";
+import { registerPublicPassport } from "./public/passport.js";
+import { registerGas } from "./gas/index.js";
 
 export async function buildServer(cfg: Config = config, db: Db = openDb(cfg.dataDir)) {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL || "info" } });
@@ -24,21 +26,26 @@ export async function buildServer(cfg: Config = config, db: Db = openDb(cfg.data
   const chain = createChainClients(cfg);
   const ai = await loadAiModule();
   const llm = ai.createLLM ? ai.createLLM() : null;
-  const indexer = new EventEmitter() as IndexerEvents; // fed by src/indexer in D1
+  // Not started here: main() subscribes the agent first so it never misses an event.
+  const indexer = startIndexer({ db, source: chain.provider, chainId: cfg.chainId, startBlock: cfg.startBlock });
 
   registerHealth(app, db, chain, llm);
   registerAuth(app, db, cfg);
   registerEvidence(app, db, chain, ai);
   registerManifests(app, db, chain);
   registerAiRoutes(app, ai, { db, chain, llm });
+  registerIndexerRoutes(app, db);
+  registerPublicPassport(app, db, chain);
+  registerGas(app, db, chain.keeper, cfg.chainId, cfg.dripAmountWei);
 
   return { app, db, chain, ai, llm, indexer };
 }
 
 async function main() {
   const { app, db, chain, ai, llm, indexer } = await buildServer();
-  if (ai.startAgent && llm) ai.startAgent({ indexer, db, chain, llm });
+  if (ai.startAgent && llm) ai.startAgent({ indexer: indexer.events, db, chain, llm });
   else app.log.warn("AI agent not started (module or LLM missing)");
+  indexer.start();
   await app.listen({ port: config.port, host: "0.0.0.0" });
 }
 
