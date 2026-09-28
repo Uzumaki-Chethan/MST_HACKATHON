@@ -1,16 +1,6 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 
-export async function deployAll(hre: HardhatRuntimeEnvironment) {
-  const message = "Hello, MST!";
-
-  const Hello = await hre.ethers.getContractFactory("Hello");
-  const hello = await Hello.deploy(message);
-  await hello.waitForDeployment();
-
-  return {
-    Hello: {
-      address: await hello.getAddress(),
-      constructorArguments: [message],
-    },
-  };
+// Replaced by the full SPEC §5.10 deploy in step A1.
+export async function deployAll(_hre: HardhatRuntimeEnvironment) {
+  return {} as Record<string, { address: string; constructorArguments: unknown[] }>;
 }

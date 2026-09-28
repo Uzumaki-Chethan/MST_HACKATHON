@@ -14,8 +14,8 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 ## What I provide for Laptop 2 (the contract between us)
 | Thing | Where | Status |
 |---|---|---|
-| Chain, money, hash helpers | `@nestledger/shared` | pending |
-| ABIs + addresses | `@nestledger/shared` (`abis/`, `addresses.ts`) | pending |
+| Chain, money, hash, enums, time windows, inspection templates | `@nestledger/shared`: `chain.ts` (`mstTestnet`, `explorerTx`, `addChainParams`), `money.ts` (`inrToWei`, `weiToInr`, `formatMSTC`, `formatINR`, `formatAmount(wei)`), `hash.ts` (`hashJson`, `hashBytes`, `ZERO_HASH`), `enums.ts`, `time.ts` (`WINDOWS.demo` / `WINDOWS.production`), `inspection.ts` (`INSPECTION_TEMPLATES`) | **done** |
+| ABIs + addresses | `@nestledger/shared`: typed `nestRegistryAbi`, `rentalEscrowAbi`, … (`as const`, from `abis/index.ts`), `abis/*.json`, `addresses[chainId][ContractName]` | ABIs **done** (from the interfaces for now; the function surface stays the same). Addresses are empty until the first deploy |
 | `IndexedEvent` type + `IndexerEvents` emitter | `packages/backend/src/indexer/types.ts` | pending |
 | `db.query` helpers + `Db` type | `packages/backend/src/db/` | pending |
 | `ChainClients` (provider + attestor wallet) | `packages/backend/src/chain/` | pending |
@@ -27,4 +27,11 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
+- 2026-09-28 — **A0 merged to main.**
+  - Appendix A interfaces are copied verbatim into `contracts/interfaces/` and compile. `pnpm --filter @nestledger/contracts compile` now also exports the ABIs to shared.
+  - Shared helpers are done, with tests.
+  - Import schemas as `@nestledger/shared/schemas`. The package.json `exports` field points that at `src/schemas/index.ts`, so please create that file.
+  - Shared `index.ts` still re-exports the Vibe Kit `deployments`, only because `frontend/src/hooks/useHello.ts` uses it. Delete useHello and tell me; I'll then remove the re-export.
+  - The frontend tsconfig targets ES2017, so bigint literals like `10n` fail the Next build. Use `BigInt(...)`, or raise the target to ES2020 in your tsconfig.
+  - Next for me: D0 backend skeleton, then A1 contracts.
 - 2026-09-28 — Repo scaffolded from the Vibe Kit, restructured to SPEC §4.3, docs pushed. Next: A0 (shared package + Appendix A interfaces + ABIs), then D0 (server skeleton).

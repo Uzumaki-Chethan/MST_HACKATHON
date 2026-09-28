@@ -4,14 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "hardhat node",
-    "compile": "hardhat compile",
+    "compile": "hardhat compile && hardhat run scripts/export-abis.ts",
     "test": "hardhat test",
     "lint": "solhint 'contracts/**/*.sol'",
     "deploy:testnet": "hardhat run scripts/deploy.ts --network testnet",
     "deploy:mainnet": "hardhat run scripts/deploy.ts --network mainnet",
     "verify:testnet": "hardhat run scripts/verify.ts --network testnet",
     "verify:mainnet": "hardhat run scripts/verify.ts --network mainnet",
-    "clean": "hardhat clean"
+    "clean": "hardhat clean",
+    "export-abis": "hardhat run scripts/export-abis.ts"
   },
   "dependencies": {
     "@openzeppelin/contracts": "~5.0.2"
