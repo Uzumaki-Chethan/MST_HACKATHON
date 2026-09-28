@@ -66,6 +66,7 @@ $env:PROPOSAL_ID="<P>"; pnpm --filter @nestledger/contracts exec hardhat run scr
 | Failure | What to do and say |
 |---|---|
 | Venue Wi-Fi | Laptop 1 on a phone hotspot. The public URLs don't change as long as the tunnels keep running |
+| A page shows a Cloudflare error (530 / 1033) | The tunnel lost its connection. It reconnects by itself within about 10 s (HTTP/2), so wait and reload once. Keep the two cloudflared windows visible on Laptop 1 during judging. If it keeps failing, switch Laptop 1 to the hotspot. Note: `localhost:3000` on Laptop 1 is **not** a fallback on its own, because the build calls the backend through its tunnel URL |
 | Phone camera / QR fails | Use the laptop's own camera in the capture wizard |
 | RPC slow | Keep talking. Each beat needs only 1–2 fresh txs. Open the tx on MSTScan while it confirms |
 | Agent attestation slow | Check `/status` (indexer lag). The agent retries 3×. The claim still works unbacked. Say so |
