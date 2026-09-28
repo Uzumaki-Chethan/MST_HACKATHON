@@ -376,6 +376,12 @@ export function ClaimReview({ id, t, me }: { id: string; t: Tranche; me: "tenant
           </button>
         </div>
       )}
+      {!contracts.resolver.address && claimed && (
+        <Notice tone="warn">
+          Disputes open once the DisputeResolver contract is deployed. Until then the tenant can accept all items, and
+          finalising after silence only works when every claimed item is AI-backed.
+        </Notice>
+      )}
       {canRespond && mask !== 0 && (
         <p className="text-xs text-slate-500">
           Undisputed items are paid to the landlord now and the unclaimed remainder comes back to you now. Only the disputed items stay frozen.
