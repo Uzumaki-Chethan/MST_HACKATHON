@@ -8,7 +8,7 @@ import type { LeaseTerms, MoveInReport } from "@nestledger/shared/schemas";
 import { Amount } from "@/components/Amount";
 import { StatusChip } from "@/components/Badges";
 import { CaptureWizard } from "@/components/CaptureWizard";
-import { Countdown } from "@/components/Countdown";
+import { Countdown, useNow } from "@/components/Countdown";
 import { Notice, RequireDeployed } from "@/components/Gates";
 import { MoveInReportView } from "@/components/MoveInReportView";
 import { Timeline } from "@/components/Timeline";
@@ -29,11 +29,6 @@ export default function LeasePage({ params }: { params: { id: string } }) {
       <LeaseDetail id={params.id} />
     </RequireDeployed>
   );
-}
-
-function useNow() {
-  const [now] = useState(() => Math.floor(Date.now() / 1000));
-  return now;
 }
 
 function LeaseDetail({ id }: { id: string }) {
@@ -87,12 +82,7 @@ function LeaseDetail({ id }: { id: string }) {
           {step.who !== "nobody" && <span className="capitalize">{step.who === me ? "you" : `the ${step.who}`}. </span>}
           {step.text}
         </p>
-        {step.deadline && (
-          <p className="text-sm text-slate-600">
-            Time left: <Countdown until={step.deadline} />
-            {step.ifNot && <> · if not, {step.ifNot}.</>}
-          </p>
-        )}
+        {step.deadline && <DeadlineLine deadline={step.deadline} ifNot={step.ifNot} />}
       </section>
 
       <ActionPanel id={id} l={l} t={t} me={me} />
@@ -349,5 +339,15 @@ function PayRentPanel({ id, l }: { id: string; l: Lease }) {
         Pay <Amount wei={total} inline />
       </button>
     </section>
+  );
+}
+
+function DeadlineLine({ deadline, ifNot }: { deadline: number; ifNot?: string }) {
+  if (useNow() >= deadline) return <p className="text-sm text-slate-600">Deadline passed{ifNot && <>: {ifNot}</>}.</p>;
+  return (
+    <p className="text-sm text-slate-600">
+      Time left: <Countdown until={deadline} />
+      {ifNot && <> · if not, {ifNot}.</>}
+    </p>
   );
 }
