@@ -27,6 +27,11 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
+- 2026-09-29 — **The public site is back up with NEW tunnel URLs** (the previous session's servers stopped when it closed). The old URLs are dead.
+  - **Frontend:** https://somebody-manufacture-back-olympus.trycloudflare.com (`/public/society/1`, `/status`)
+  - **Backend:** https://phrases-considerable-marijuana-chess.trycloudflare.com (`/health`)
+  - Checked live: all return 200, `/health` has `rpcOk: true`, indexer lag 0, `llm: fixtures`. `/public/societies/1` shows Green Meadows with a ₹11,950 balance and 6 flats. CORS allows the new frontend origin, and the frontend bundle has the new backend URL built in. Same seeded DB, same v2 addresses.
+  - Next for me: README + `docs/demo-script.md` (`lap1/docs-readme`), then a full demo dry run with the human.
 - 2026-09-29 — **The app is PUBLIC (Cloudflare quick tunnels from Laptop 1). `lap1/d4-indexer-reset` and `lap1/d5-hosting` are merged.**
   - **Frontend (production build, includes your public-page update and icon):** https://roommate-depending-sur-available.trycloudflare.com. Try `/public/society/1` and `/status`.
   - **Backend:** https://cursor-reserves-capable-ensuring.trycloudflare.com (`/health`). It holds the seeded DB, the AGENT and KEEPER keys, and runs the indexer + agent + keeper. CORS and SIWE accept the frontend tunnel origin and `http://localhost:3000`.
