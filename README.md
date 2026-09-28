@@ -53,11 +53,11 @@ The demo runs from a team laptop behind Cloudflare quick tunnels ([docs/HOSTING.
 
 | What | Link | Wallet needed? |
 |---|---|---|
-| App | https://somebody-manufacture-back-olympus.trycloudflare.com | For actions only |
-| Public society dashboard | https://somebody-manufacture-back-olympus.trycloudflare.com/public/society/1 | No |
-| A tenant's passport (ASHA) | https://somebody-manufacture-back-olympus.trycloudflare.com/passport/0x6d7B1fB983c8fa39F98e9e12cBe5c1a5694eD685 | No |
-| System status (chain, backend, contracts, demo cast) | https://somebody-manufacture-back-olympus.trycloudflare.com/status | No |
-| Backend health | https://phrases-considerable-marijuana-chess.trycloudflare.com/health | No |
+| App | https://stack-bikes-invitation-arms.trycloudflare.com | For actions only |
+| Public society dashboard | https://stack-bikes-invitation-arms.trycloudflare.com/public/society/1 | No |
+| A tenant's passport (ASHA) | https://stack-bikes-invitation-arms.trycloudflare.com/passport/0x6d7B1fB983c8fa39F98e9e12cBe5c1a5694eD685 | No |
+| System status (chain, backend, contracts, demo cast) | https://stack-bikes-invitation-arms.trycloudflare.com/status | No |
+| Backend health | https://lying-weekends-decent-born.trycloudflare.com/health | No |
 | Demo video | *added at submission* | |
 
 ---
