@@ -1,0 +1,19 @@
+{
+  "vendorName": "Sharma Plumbing Works (sample vendor)",
+  "vendorGSTIN": "29ABCDE1234F1Z5",
+  "invoiceNumber": "SPW-0419",
+  "invoiceDate": "2026-09-08",
+  "lineItems": [
+    {
+      "description": "Overhead tank float valve",
+      "quantity": 1,
+      "unitPriceINR": 1271,
+      "amountINR": 1271
+    }
+  ],
+  "subtotalINR": 1271,
+  "taxINR": 229,
+  "totalINR": 1500,
+  "category": "plumbing",
+  "confidence": 0.9
+}

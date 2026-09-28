@@ -22,7 +22,7 @@ export interface VisionLLM {
     images: LLMImage[];
     schema: z.ZodType<T, z.ZodTypeDef, unknown>;
     maxTokens?: number;
-    /** Fixture file name (src/ai/fixtures/{task}.json); ignored by real providers. */
+    /** Fixture file name (src/ai/fixtures/{task}.json, "task@variant" allowed); ignored by real providers. */
     task?: string;
   }): Promise<{ output: T; raw: string }>;
 }
@@ -132,7 +132,10 @@ function fixturesLLM(): VisionLLM {
     id: "fixtures",
     async analyze({ schema, task }) {
       if (!task) throw new Error("fixtures provider needs `task` to pick src/ai/fixtures/{task}.json");
-      const raw = await readFile(path.join(FIXTURES_DIR, `${task}.json`), "utf8");
+      // "task@variant" picks a per-case fixture (e.g. one per demo invoice) and falls back to "task".
+      const raw = await readFile(path.join(FIXTURES_DIR, `${task}.json`), "utf8").catch(() =>
+        readFile(path.join(FIXTURES_DIR, `${task.split("@")[0]}.json`), "utf8"),
+      );
       const parsed = schema.safeParse(JSON.parse(raw));
       if (!parsed.success) throw new LLMOutputError(`fixture ${task}.json does not match its schema: ${parsed.error.message}`, raw);
       return { output: parsed.data, raw };

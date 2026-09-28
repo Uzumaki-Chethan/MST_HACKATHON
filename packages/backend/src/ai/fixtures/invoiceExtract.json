@@ -1,0 +1,25 @@
+{
+  "vendorName": "Sharma Plumbing Works (sample vendor)",
+  "vendorGSTIN": "29ABCDE1234F1Z5",
+  "invoiceNumber": "SPW-0455",
+  "invoiceDate": "2026-09-28",
+  "lineItems": [
+    {
+      "description": "Replace kitchen sink trap and waste pipe",
+      "quantity": 1,
+      "unitPriceINR": 2200,
+      "amountINR": 2200
+    },
+    {
+      "description": "Pipe leak repair, labour",
+      "quantity": 1,
+      "unitPriceINR": 1868,
+      "amountINR": 1868
+    }
+  ],
+  "subtotalINR": 4068,
+  "taxINR": 732,
+  "totalINR": 4800,
+  "category": "plumbing",
+  "confidence": 0.9
+}

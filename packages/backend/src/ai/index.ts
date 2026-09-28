@@ -3,4 +3,6 @@ export { createLLM, LLMOutputError, PROMPT_VERSION, type VisionLLM } from "./llm
 export { checkEvidence, isTainted, type EvidenceMeta, type IntegrityResult } from "./integrity.js";
 export { runMoveIn } from "./tasks/moveIn.js";
 export { runMoveOut } from "./tasks/moveOut.js";
+export { runMilestonePreview } from "./tasks/milestone.js";
+export { runInvoicePreview } from "./tasks/invoice.js";
 export type { AiDeps } from "./common.js";

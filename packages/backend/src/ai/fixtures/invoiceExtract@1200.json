@@ -1,0 +1,19 @@
+{
+  "vendorName": "Sharma Plumbing Works (sample vendor)",
+  "vendorGSTIN": "29ABCDE1234F1Z5",
+  "invoiceNumber": "SPW-0412",
+  "invoiceDate": "2026-09-01",
+  "lineItems": [
+    {
+      "description": "Kitchen tap washer replacement, labour",
+      "quantity": 1,
+      "unitPriceINR": 1017,
+      "amountINR": 1017
+    }
+  ],
+  "subtotalINR": 1017,
+  "taxINR": 183,
+  "totalINR": 1200,
+  "category": "plumbing",
+  "confidence": 0.9
+}

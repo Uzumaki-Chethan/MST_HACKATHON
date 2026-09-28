@@ -80,10 +80,12 @@ export async function checkEvidence(file: Buffer, meta: EvidenceMeta, ctx: Integ
   if (dup) result.duplicateOf = dup.hash;
 
   result.phash = await perceptualHash(file);
-  if (result.phash) {
+  // Only photos are compared, and only with other photos: invoices from one template and design references
+  // look alike by construction and would be false "reused" hits.
+  if (result.phash && meta.kind === "photo") {
     let best: { hash: string; d: number } | null = null;
     for (const row of ctx.db.query<{ hash: string; phash: string }>(
-      "SELECT hash, phash FROM evidence WHERE phash IS NOT NULL AND hash != ?",
+      "SELECT hash, phash FROM evidence WHERE phash IS NOT NULL AND hash != ? AND coalesce(json_extract(meta_json, '$.kind'), 'photo') = 'photo'",
       [hash],
     )) {
       if (row.phash.length !== result.phash.length) continue;

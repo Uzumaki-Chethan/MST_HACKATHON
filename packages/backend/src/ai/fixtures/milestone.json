@@ -1,0 +1,57 @@
+{
+  "lineItems": [
+    {
+      "index": 0,
+      "status": "complete",
+      "supportedFraction": 1,
+      "evidence": "Wall tiles are laid to the counter height with even grout lines, matching the reference.",
+      "discrepancies": []
+    },
+    {
+      "index": 1,
+      "status": "complete",
+      "supportedFraction": 1,
+      "evidence": "Counter slab installed and edges polished.",
+      "discrepancies": [
+        {
+          "description": "Small grout gap at the left end of the counter.",
+          "severity": "minor",
+          "photoRef": "site/counter"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "status": "partial",
+      "supportedFraction": 0.7,
+      "evidence": "Sink is fitted; the tap is not yet connected.",
+      "discrepancies": [
+        {
+          "description": "Tap not connected to the supply line.",
+          "severity": "minor",
+          "photoRef": "site/sink"
+        }
+      ]
+    }
+  ],
+  "checklist": [
+    {
+      "itemId": "c1",
+      "result": "pass",
+      "note": "Tile colour matches the design reference."
+    },
+    {
+      "itemId": "c2",
+      "result": "pass",
+      "note": "Counter edge is finished."
+    },
+    {
+      "itemId": "c3",
+      "result": "unclear",
+      "note": "Plumbing behind the cabinet is not visible."
+    }
+  ],
+  "matchScore": 88,
+  "summary": "Tiling and counter match the design; the sink is fitted but the tap is not yet connected.",
+  "confidence": 0.85
+}
