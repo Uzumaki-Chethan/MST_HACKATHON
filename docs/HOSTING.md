@@ -17,6 +17,7 @@ This opens four windows (two tunnels, the backend, the frontend) and writes the 
 
 - **The URLs change every time the tunnels restart.** Update the README / submission form links after a restart.
 - Keep Laptop 1 awake and online (plug it in; turn off sleep) through judging.
+- **Running `pnpm --filter @nestledger/frontend build` on Laptop 1 (for example the merge checks) overwrites the build the public frontend serves**, and without `NEXT_PUBLIC_API_URL` it points at `localhost:8080`. Afterwards, close the frontend window and restart it with the backend URL set: `$env:NEXT_PUBLIC_API_URL='<api URL>'; cd packages\frontend; pnpm build; pnpm exec next start -p 3000`.
 - The backend keeps its data in `packages/backend/data/` (SQLite + evidence files). Don't delete it: the seeded invoices, photos and AI reports live there.
 - After a contract redeploy, the indexer resets itself (SPEC-CHANGES 2026-09-29). A redeploy also needs a fresh seed (`packages/backend/scripts/seed.ts`).
 - Real AI instead of fixtures: set `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY` in `.env.local`, then restart the backend window.
