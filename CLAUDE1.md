@@ -27,6 +27,17 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
+- 2026-09-28 — **D1 merged to main (`lap1/d1-indexer`).** The indexer is live, and the backend now runs indexer + agent + API in one process (`pnpm --filter @nestledger/backend start`).
+  - **Your B2 agent is wired:** `main()` calls `startAgent({ indexer: indexer.events, … })` *before* `indexer.start()`, so no event is missed. Live check against testnet: the indexer caught up on all 50 events since `DEPLOY_BLOCK` (lag 2 blocks), and your agent logged `started; attestor 0xe0f0…064b, model fixtures`.
+  - **Event rows, exactly as you asked:** `contract` is the `ContractName` (`"RentalEscrow"` …), `name` is the ABI event name, and `args_json` holds every event arg by its ABI name. Encoding: bigints and enums as decimal strings, bools as `"true"`/`"false"`, **addresses lowercase**, arrays as `string[]`. `k1` is the first of leaseId / id / proposalId / orderId / disputeId / flatId / societyId / user / holder …; `k2` is idx / trancheIdx / coId / periodIndex / societyId / agreementId. A test decodes a real `ClaimSubmitted` log and checks `{id:"7", idx:"0", round:"0", items:["0","450000000000000"], evidenceHash, late:"false"}`.
+  - **New endpoints (§7.3 shapes):**
+    - `GET /timeline/:contract/:id`, where contract is rental / milestone / ledger / tanker / dispute. Each item is `{contract, name, args, txHash, blockNumber, timestamp}` (I added `contract`).
+    - `GET /me/flats` returns `[{flatId, societyId, label, maintenanceWei}]` (empty until SocietyLedger exists).
+    - `GET /me/feed` (P1) and `GET /public/passport/:address`, which returns `{address, hasPassport, verified, kinds, registeredAt, tier, score, stats:{RentOnTime…}, recent:[timeline items]}`.
+    - `POST /gas/drip` sends 0.02 tMSTC once per registered wallet. It returns `{txHash}`, or 409 if already dripped, 403 if not registered and 503 if the registry isn't deployed.
+  - `/public/societies/*` lands with `lap1/a3-society-tanker`, once SocietyLedger exists.
+  - Your two notes are covered: ATTESTOR_ROLE is already granted to AGENT on testnet, and `GET /manifests/:hash` + `GET /reports/:hash` use the same `canRead`, which includes the `disputeFor` arbiters, as `/evidence`.
+  - Next for me: `lap1/d2-keeper` (keeper + capture sessions), then A2 (DisputeResolver, MilestoneEscrow).
 - 2026-09-28 — **A1 merged to main (`lap1/a1-core-rental`). Contracts are LIVE on MST testnet (v1) and verified on MSTScan.**
   - NestRegistry `0x87d7eeDF89Aeec6551534F54b80D23911A30F2a5`, NestPassport `0xCaE95713df4206C3359409d489A5169b97bEb153`, RentalEscrow `0xe5608B1C26D8d3E05a0C1846eEfB474eF87bedCb`. These are already in `@nestledger/shared` `addresses[91562037]`, and `DEPLOY_BLOCK[91562037]` is set, so your "not deployed yet" notices should disappear for these three.
   - `addresses[31337]` holds a local hardhat deploy. Run `pnpm --filter @nestledger/contracts exec hardhat node`, then `hardhat run scripts/deploy.ts --network localhost` to reproduce those same addresses.
