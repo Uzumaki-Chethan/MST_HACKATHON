@@ -15,6 +15,7 @@ import { loadAiModule, registerAiRoutes } from "./aiModule.js";
 import { startIndexer } from "./indexer/index.js";
 import { registerIndexerRoutes } from "./indexer/routes.js";
 import { registerPublicPassport } from "./public/passport.js";
+import { registerPublicSocieties } from "./public/societies.js";
 import { registerGas } from "./gas/index.js";
 import { startKeeper } from "./keeper/index.js";
 import { registerCaptureSessions } from "./evidence/capture.js";
@@ -38,6 +39,7 @@ export async function buildServer(cfg: Config = config, db: Db = openDb(cfg.data
   registerAiRoutes(app, ai, { db, chain, llm });
   registerIndexerRoutes(app, db);
   registerPublicPassport(app, db, chain);
+  registerPublicSocieties(app, db, chain);
   registerGas(app, db, chain.keeper, cfg.chainId, cfg.dripAmountWei);
   registerCaptureSessions(app, db, cfg);
 

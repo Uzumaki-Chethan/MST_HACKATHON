@@ -27,6 +27,45 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
+- 2026-09-29 — **A3 merged to main (`lap1/a3-society-tanker`).** SocietyLedger and the public society API are done; 61 contract tests pass. **TankerTrust and IoT are dropped by team decision** (SPEC-CHANGES): no `/iot` page and no Water tab. A `TankerOrder` proposal reverts `BadInput`. The build is now 7 contracts.
+  - **Not on testnet yet.** `lap1/a4-deploy-seed` comes next and deploys all 7 at once. `addresses[31337]` holds a full local deploy. `deploy.ts --network localhost` now works with no env vars: attestor and arbiters fall back to hardhat accounts #1–#4.
+  - **SocietyLedger behaviour you'll build against:**
+    - `propose` auto-approves for the proposer (approvals = 1), so a tier-0 proposal with threshold 1 can execute right after attestation or `attestTimeout`.
+    - Tier = the vendor's month-to-date committed spend including this proposal (`vendorMonthCommitted(societyId, vendor, month)`, where `month = floor(ts / 30 days)`). `WorkDecision` is always at least tier 1.
+    - `attestInvoice(…, flagged=true)` resets approvals to 0 and bumps the epoch (`hasApproved` goes false). After that, **every** `approve` needs a non-zero `overrideReasonHash` (a note.v1 manifest).
+    - Tier 2: when approvals reach the threshold the status becomes `CommitteeApproved` and `voteEnds` is set. `castVote(id, flatId, support)` is cast by the flat's delegate if one is set, otherwise the owner. After `voteEnds`, `execute` pays if quorum and majority hold, otherwise it sets `Rejected` (the keeper does this).
+    - `canExecute(id)` returns one of these reason strings: `"not open"`, `"awaiting AI attestation"`, `"needs more committee approvals"`, `"resident vote still open"`, `"resident quorum not met"`, `"residents voted against"`.
+    - `FundWork` data is `abi.encode(ProjectInput, MilestoneInput[])`. `payee` must equal `contractor` and `amount` must equal Σ line items; `resultRef` = the new projectId, whose payer is the ledger and `payerRef` = societyId.
+    - `WorkDecision` data is `abi.encode(uint256 projectId, uint8 action, uint16 mask, bytes32 reasonHash)`, with action 0 accept, 1 dispute (amount = the dispute bond) or 2 rework (amount 0 for accept and rework). Refunds from society projects arrive as `Deposited(societyId, milestoneEscrow, amount)`.
+    - Views: `getSociety`, `getFlat`, `getProposal`, `flatsOf`, `proposalsOf`, `societiesOf(member)` (admin or committee), `isCommittee`, `hasApproved`, `hasVoted`, `effectiveTier`, `requiredApprovals`, `availableBalance`, `flatInfo`.
+  - **`GET /public/societies/:id`** (no login, cached 5 s). Amounts are decimal wei strings; addresses are lowercase.
+    ```
+    { societyId, name, admin, metaHash, meta: <society.v1 manifest JSON> | null, contract, explorerUrl,
+      committee: string[],
+      config: { threshold, tier1LimitWei, tier2LimitWei, quorumBps, votingPeriod, attestTimeout },
+      totals: { balanceWei, committedWei, availableWei, totalCollectedWei, totalSpentWei, collectedThisMonthWei, spentThisMonthWei },
+      monthly: [{ month: "2026-09", collectedWei, spentWei }]      // last 6 calendar months, oldest first
+      spendByCategory: [{ category, spentWei }],
+      flats: [{ flatId, label, weight, maintenanceWei, totalPaidWei, lastPaidAt, paidThisMonth }],
+      openProposals: [{ proposalId, kind: "PayVendor"|"FundWork"|"WorkDecision"|"TankerOrder", status: "Pending"|"CommitteeApproved",
+        payee, amountWei, category, docHash, tier, effectiveTier, approvals, requiredApprovals, attested, flagged, riskScore,
+        reportHash, justification: string|null, createdAt, voteEnds, votesFor, votesAgainst, totalWeight, quorumBps, canExecute, reason }],
+      updatedAt }
+    ```
+    It returns 404 for an unknown society and 503 before SocietyLedger is deployed.
+  - **`GET /public/societies/:id/ledger?cursor=`**, newest first, 25 per page. Pass `nextCursor` back as `cursor`; `null` means the end.
+    ```
+    { items: [
+        { id, direction: "in", type: "maintenance", amountWei, from, flatId, flatLabel, txHash, blockNumber, timestamp }
+      | { id, direction: "in", type: "deposit", amountWei, from, txHash, blockNumber, timestamp }
+      | { id, direction: "out", type: "PayVendor"|"FundWork"|"WorkDecision"|"TankerOrder", amountWei, payee, proposalId,
+          category, docHash, invoiceFiles: string[] /* invoice.v1 files, open with GET /evidence/:hash */,
+          reportHash|null, riskScore, flagged, justification|null,
+          approvers: [{ member, overrideReasonHash|null, overrideText|null }], resultRef, txHash, blockNumber, timestamp } ],
+      nextCursor: string | null }
+    ```
+    `overrideText` is read from the note.v1 manifest you POSTed. `justification` comes from the stored invoice report.
+  - Next for me: `lap1/a4-deploy-seed`, which deploys all 7 contracts to testnet (v2), verifies them, and seeds per SPEC §11.2 with your invoice rules.
 - 2026-09-29 — **A2 merged to main (`lap1/a2-dispute-milestone`).** DisputeResolver and MilestoneEscrow are written and tested (**50 contract tests**). They are **not on testnet yet**: all 8 contracts go up together in the v2 redeploy after A3.
   - The shared ABIs for `milestoneEscrowAbi` and `disputeResolverAbi` are now the implementation ABIs. Build your C3b pages against them.
   - `addresses[31337]` has a local deploy with all 5 contracts so far, including MilestoneEscrow + DisputeResolver, for local UI work (`hardhat node` + `deploy.ts --network localhost`).
