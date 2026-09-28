@@ -149,7 +149,11 @@ function Payout({ p, item }: { p: ProposalRow; item?: PublicLedgerItem }) {
     queryFn: () => getManifest<InvoiceDoc>(p.docHash),
   });
   const executedEv = events.data?.find((e) => e.name === "ProposalExecuted");
-  const approvals = (events.data ?? []).filter((e) => e.name === "Approved");
+  // A flagged attestInvoice wipes earlier approvals (SPEC §5): only approvals after the last flagged one count,
+  // the same rule as the backend's /ledger approvers[].
+  const ordered = [...(events.data ?? [])].sort((x, y) => x.blockNumber - y.blockNumber);
+  const lastFlag = ordered.findLastIndex((e) => e.name === "InvoiceAttested" && String(e.args.flagged) === "true");
+  const approvals = ordered.slice(lastFlag + 1).filter((e) => e.name === "Approved");
   return (
     <div className="space-y-2 border-t border-slate-100 pt-3 first:border-0 first:pt-0">
       <div className="flex flex-wrap items-start justify-between gap-2 text-sm">
@@ -220,7 +224,7 @@ function OpenProposal({ p, d }: { p: ProposalRow; d: SocietyData }) {
       {voting && (
         <div className="space-y-1">
           <p className="text-xs text-slate-600">
-            Residents: {String(p.votesFor)} for · {String(p.votesAgainst)} against (weight of {total}; quorum {quorumPct}%) · closes in <Countdown until={p.voteEnds} />
+            Residents: {String(p.votesFor)} for · {String(p.votesAgainst)} against (weight of {total}; quorum {quorumPct}%) · <Countdown until={p.voteEnds} prefix="closes in ">voting closed</Countdown>
           </p>
           <div className="relative h-2 w-full rounded bg-slate-100">
             <div className="absolute h-2 rounded bg-accent" style={{ width: `${total ? (Number(p.votesFor) / total) * 100 : 0}%` }} />

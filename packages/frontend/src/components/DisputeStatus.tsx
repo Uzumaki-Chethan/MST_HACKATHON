@@ -48,7 +48,7 @@ export function DisputeStatus({ escrow, agreementId, idx = 0 }: { escrow?: `0x${
       <p className="text-xs text-slate-500">
         Arbiters: {dispute.arbiters.map((x, s) => <span key={x} className="mr-2"><AddressLink address={x} />{bit(dispute.votedBits, s) ? " ✓" : ""}</span>)}
       </p>
-      {dispute.status === 0 && <p className="text-xs text-slate-500">Voting closes in <Countdown until={dispute.voteDeadline} /> (after that the admin can replace a silent arbiter).</p>}
+      {dispute.status === 0 && <p className="text-xs text-slate-500"><Countdown until={dispute.voteDeadline} prefix="Voting closes in ">The voting window has passed; votes still count</Countdown> (after that the admin can replace a silent arbiter).</p>}
     </section>
   );
 }

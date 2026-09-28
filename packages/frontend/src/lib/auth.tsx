@@ -1,6 +1,7 @@
 "use client";
 
 // SIWE login (SPEC §8.1): /auth/nonce → personal_sign → /auth/verify. JWT in memory + sessionStorage.
+import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { createSiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";
@@ -38,6 +39,7 @@ function store(s: Session | null) {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
   const { address } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const [session, setSession] = useState<Session | null>(null);
@@ -47,7 +49,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(s);
     setAuthToken(s?.token ?? null);
     store(s);
-  }, []);
+    // Private manifests, reports and photos that failed under the old session (401/403) load again under the new one.
+    queryClient.resetQueries({
+      predicate: (q) => ["manifest", "report", "evidence"].includes(String(q.queryKey[0])) && q.state.status === "error",
+    });
+  }, [queryClient]);
 
   useEffect(() => {
     const stored = readStored();

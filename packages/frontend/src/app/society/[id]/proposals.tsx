@@ -100,7 +100,7 @@ function ProposalCard({ p, data, isCommittee }: { p: ProposalRow; data: SocietyD
         <div className="space-y-1">
           <p className="text-xs text-slate-600">
             Resident vote: {String(p.votesFor)} for · {String(p.votesAgainst)} against · {cast}/{totalWeight} weight voted (quorum {quorumPct}%)
-            {voting && <> · closes in <Countdown until={p.voteEnds} /></>}
+            {voting && <> · <Countdown until={p.voteEnds} prefix="closes in ">voting closed</Countdown></>}
           </p>
           <div className="relative h-2 w-full rounded bg-slate-100">
             <div className="absolute h-2 rounded bg-accent" style={{ width: `${totalWeight ? (Number(p.votesFor) / totalWeight) * 100 : 0}%` }} />

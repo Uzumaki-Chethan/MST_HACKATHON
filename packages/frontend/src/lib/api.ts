@@ -99,7 +99,8 @@ export const aiMoveIn = (leaseId: string, bundleHash: Hex) =>
 export const aiMoveOut = (leaseId: string, bundleHash: Hex) =>
   post<{ report: MoveOutReport; reportHash: Hex }>("/ai/move-out", { leaseId, bundleHash });
 export const aiMilestonePreview = (projectId: string, milestoneIndex: number, bundleHash: Hex) =>
-  post<{ report: MilestoneReport; reportHash: Hex; supportedPreview: string[] }>("/ai/milestone/preview", {
+  // `integrity` lists photos that failed the §6.5 checks; any entry zeroes the AI support. Older backends omit it.
+  post<{ report: MilestoneReport; reportHash: Hex; supportedPreview: string[]; integrity?: string[] }>("/ai/milestone/preview", {
     projectId,
     milestoneIndex,
     bundleHash,
