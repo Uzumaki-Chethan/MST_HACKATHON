@@ -3,7 +3,7 @@
 // SPEC §8.5 — public transparency dashboard. No wallet, no sign-in: everything is read from the chain
 // and from public backend data (invoices, AI reports, indexed events).
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { explorerAddress, formatINR, ProposalStatus, weiToInr, ZERO_HASH } from "@nestledger/shared";
 import type { InvoiceDoc, Note } from "@nestledger/shared/schemas";
 import { Amount } from "@/components/Amount";
@@ -13,7 +13,7 @@ import { Notice } from "@/components/Gates";
 import { AddressLink, TxLink } from "@/components/TxLink";
 import { useNest } from "@/hooks/useNest";
 import { useSocietyData, type ProposalRow, type SocietyData } from "@/hooks/useSociety";
-import { getManifest, getTimeline, publicEvidenceUrl } from "@/lib/api";
+import { getManifest, getPublicSociety, getPublicSocietyLedger, getTimeline, publicEvidenceUrl, type PublicLedgerItem } from "@/lib/api";
 import { KIND_TEXT, paidThisMonth, ZERO_ADDR } from "@/lib/society";
 import { InvoiceFlag } from "@/app/society/[id]/proposals";
 
@@ -33,6 +33,16 @@ function Dashboard({ id, d, ledger }: { id: string; d: SocietyData; ledger: stri
   const s = d.society;
   const executed = d.proposals.filter((p) => ProposalStatus[p.status] === "Executed");
   const open = d.proposals.filter((p) => p.status < 2);
+  // Backend aggregates (CLAUDE1.md A3) add the monthly series and public override reasons; the page still
+  // works from chain reads alone if the backend is unreachable.
+  const pub = useQuery({ queryKey: ["publicSociety", id], queryFn: () => getPublicSociety(id), refetchInterval: 5000, retry: false });
+  const ledgerItems = useQuery({ queryKey: ["publicLedger", id], queryFn: () => getPublicSocietyLedger(id), refetchInterval: 5000, retry: false });
+  const payoutItem = (p: ProposalRow) => ledgerItems.data?.items.find((x) => x.direction === "out" && x.proposalId === String(p.id));
+  const monthly = (pub.data?.monthly ?? []).map((m) => ({
+    month: new Date(`${m.month}-01T00:00:00`).toLocaleDateString("en-IN", { month: "short", year: "2-digit" }),
+    collected: weiToInr(BigInt(m.collectedWei)),
+    spent: weiToInr(BigInt(m.spentWei)),
+  }));
   const byCategory = Object.entries(
     executed.reduce<Record<string, number>>((acc, p) => {
       const k = p.category || KIND_TEXT[p.kind];
@@ -53,11 +63,35 @@ function Dashboard({ id, d, ledger }: { id: string; d: SocietyData; ledger: stri
         <p className="text-xs text-slate-500">No wallet needed. Refreshes every 5 seconds.</p>
       </header>
 
-      <section className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {([["Treasury balance", s.balance], ["Available", d.available], ["Reserved for open proposals", s.committed], ["Collected (all time)", s.totalCollected], ["Spent (all time)", s.totalSpent]] as const).map(([label, wei]) => (
           <div key={label} className="card"><p className="text-xs uppercase text-slate-500">{label}</p><Amount wei={wei} /></div>
         ))}
       </section>
+
+      {pub.data && monthly.length > 0 && (
+        <section className="card space-y-2">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="font-semibold text-slate-900">Collections vs spending, last 6 months</h2>
+            <p className="text-xs text-slate-600">
+              This month: collected <Amount wei={BigInt(pub.data.totals.collectedThisMonthWei)} inline /> · spent{" "}
+              <Amount wei={BigInt(pub.data.totals.spentThisMonthWei)} inline />
+            </p>
+          </div>
+          <div className="h-56 w-full">
+            <ResponsiveContainer>
+              <BarChart data={monthly}>
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tickFormatter={(v: number) => formatINR(v)} tick={{ fontSize: 11 }} width={80} />
+                <Tooltip formatter={(v: number, name: string) => [`${formatINR(v)} (demo rate)`, name === "collected" ? "Collected" : "Spent"]} />
+                <Legend formatter={(v: string) => (v === "collected" ? "Collected" : "Spent")} />
+                <Bar dataKey="collected" fill="#0F766E" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="spent" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      )}
 
       {byCategory.length > 0 && (
         <section className="card space-y-2">
@@ -78,7 +112,7 @@ function Dashboard({ id, d, ledger }: { id: string; d: SocietyData; ledger: stri
       <section className="card space-y-3">
         <h2 className="font-semibold text-slate-900">Payouts</h2>
         {!executed.length && <p className="text-sm text-slate-500">No payouts yet.</p>}
-        {executed.map((p) => <Payout key={String(p.id)} p={p} />)}
+        {executed.map((p) => <Payout key={String(p.id)} p={p} item={payoutItem(p)} />)}
       </section>
 
       <section className="card space-y-3">
@@ -107,10 +141,11 @@ function useProposalEvents(p: ProposalRow) {
   return useQuery({ queryKey: ["timeline", "ledger", String(p.id)], queryFn: () => getTimeline("ledger", String(p.id)), refetchInterval: 5000, retry: false });
 }
 
-function Payout({ p }: { p: ProposalRow }) {
+function Payout({ p, item }: { p: ProposalRow; item?: PublicLedgerItem }) {
   const events = useProposalEvents(p);
+  const files = item?.invoiceFiles?.length ? item.invoiceFiles : undefined;
   const doc = useQuery({
-    queryKey: ["manifest", p.docHash], enabled: p.kind === 0 && p.docHash !== ZERO_HASH, retry: false, staleTime: Infinity,
+    queryKey: ["manifest", p.docHash], enabled: !files && p.kind === 0 && p.docHash !== ZERO_HASH, retry: false, staleTime: Infinity,
     queryFn: () => getManifest<InvoiceDoc>(p.docHash),
   });
   const executedEv = events.data?.find((e) => e.name === "ProposalExecuted");
@@ -129,25 +164,30 @@ function Payout({ p }: { p: ProposalRow }) {
         </div>
         {executedEv && <TxLink hash={executedEv.txHash} />}
       </div>
-      {doc.data && (
+      {(files ?? doc.data?.files) && (
         <p className="text-xs">
-          Invoice: {doc.data.files.map((h, i) => <a key={h} className="mr-2 text-accent underline" href={publicEvidenceUrl(h)} target="_blank" rel="noreferrer">page {i + 1}</a>)}
+          Invoice: {(files ?? doc.data?.files ?? []).map((h, i) => <a key={h} className="mr-2 text-accent underline" href={publicEvidenceUrl(h)} target="_blank" rel="noreferrer">page {i + 1}</a>)}
         </p>
       )}
       {p.kind === 0 && <InvoiceFlag p={p} />}
       {approvals.length > 0 && (
         <div className="text-xs text-slate-600">
           Approved by:{" "}
-          {approvals.map((a) => <Approver key={`${a.txHash}-${a.args.member}`} member={String(a.args.member)} reasonHash={String(a.args.overrideReasonHash)} txHash={a.txHash} />)}
+          {approvals.map((a) => (
+            <Approver
+              key={`${a.txHash}-${a.args.member}`} member={String(a.args.member)} reasonHash={String(a.args.overrideReasonHash)} txHash={a.txHash}
+              publicText={item?.approvers?.find((x) => x.member === String(a.args.member).toLowerCase() && x.overrideReasonHash === a.args.overrideReasonHash)?.overrideText}
+            />
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-function Approver({ member, reasonHash, txHash }: { member: string; reasonHash: string; txHash: string }) {
+function Approver({ member, reasonHash, txHash, publicText }: { member: string; reasonHash: string; txHash: string; publicText?: string | null }) {
   const note = useQuery({
-    queryKey: ["manifest", reasonHash], enabled: reasonHash !== ZERO_HASH, retry: false, staleTime: Infinity,
+    queryKey: ["manifest", reasonHash], enabled: reasonHash !== ZERO_HASH && !publicText, retry: false, staleTime: Infinity,
     queryFn: () => getManifest<Note>(reasonHash),
   });
   return (
@@ -155,7 +195,7 @@ function Approver({ member, reasonHash, txHash }: { member: string; reasonHash: 
       <AddressLink address={member} />
       {reasonHash !== ZERO_HASH && (
         <span className="ml-1 italic text-slate-700">
-          {note.data ? `"${note.data.text}"` : note.isError ? "(override reason on record; sign in to read it)" : "…"}
+          {publicText ? `"${publicText}"` : note.data ? `"${note.data.text}"` : note.isError ? "(override reason on record; sign in to read it)" : "…"}
         </span>
       )}{" "}
       <TxLink hash={txHash} />
