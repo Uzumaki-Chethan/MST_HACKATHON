@@ -37,3 +37,4 @@ data-*/
 
 # local browser-test artefacts
 .playwright-mcp/
+PUBLIC-URLS.local.txt

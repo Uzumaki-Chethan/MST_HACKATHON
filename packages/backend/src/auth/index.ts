@@ -33,7 +33,7 @@ export function requireUser(req: FastifyRequest): string {
 
 export function registerAuth(app: FastifyInstance, db: Db, cfg: Config) {
   secret = cfg.jwtSecret;
-  const domain = new URL(cfg.publicWebOrigin).host;
+  const domains = new Set(cfg.publicWebOrigins.map((o) => new URL(o).host));
 
   app.get("/auth/nonce", async () => {
     const nonce = crypto.randomBytes(12).toString("hex"); // SIWE nonces must be alphanumeric, ≥ 8 chars
@@ -55,7 +55,8 @@ export function registerAuth(app: FastifyInstance, db: Db, cfg: Config) {
     db.run("DELETE FROM nonces WHERE nonce = ?", [msg.nonce]); // single use
     if (msg.chainId !== cfg.chainId) throw unauthorized(`Wrong chain; expected ${cfg.chainId}`);
 
-    const result = await msg.verify({ signature: body.signature, domain, nonce: msg.nonce }, { suppressExceptions: true });
+    if (!domains.has(msg.domain)) throw unauthorized(`Sign-in from an unknown site: ${msg.domain}`);
+    const result = await msg.verify({ signature: body.signature, domain: msg.domain, nonce: msg.nonce }, { suppressExceptions: true });
     if (!result.success) throw unauthorized("Signature check failed");
 
     const address = msg.address.toLowerCase();
