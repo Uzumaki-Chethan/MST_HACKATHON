@@ -87,11 +87,11 @@ describe("backend D0", () => {
     expect(anon.statusCode).toBe(200);
   });
 
-  it("answers /health even when the RPC is down, and /ai/* with 503 before the AI module exists", async () => {
+  it("answers /health even when the RPC is down, and /ai/* with 503 (no AI module) or 404 (unknown bundle)", async () => {
     const health = (await app.inject({ method: "GET", url: "/health" })).json();
     expect(health.rpcOk).toBe(false);
     const token = await login(Wallet.createRandom());
     const ai = await app.inject({ method: "POST", url: "/ai/move-in", payload: { leaseId: "1", bundleHash: hashJson({ a: 1 }) }, headers: { authorization: `Bearer ${token}` } });
-    expect([200, 503]).toContain(ai.statusCode);
+    expect([200, 404, 503]).toContain(ai.statusCode);
   });
 });

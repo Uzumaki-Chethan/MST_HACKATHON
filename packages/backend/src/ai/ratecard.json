@@ -1,0 +1,16 @@
+{
+  "note": "Sample rates for the demo (SPEC §6.9). Placeholders, not sourced quotes: label them 'sample rates' in the UI.",
+  "items": [
+    { "id": "paint_wall_sqft", "description": "Repaint wall (putty + 2 coats)", "unit": "sq ft", "rateINR": 25 },
+    { "id": "wall_crack_repair", "description": "Fill and finish a wall crack or hole", "unit": "each", "rateINR": 800 },
+    { "id": "tile_replace", "description": "Replace a cracked floor or wall tile", "unit": "each", "rateINR": 450 },
+    { "id": "door_repair", "description": "Repair a door, frame or handle", "unit": "each", "rateINR": 1200 },
+    { "id": "lock_replace", "description": "Replace a lock", "unit": "each", "rateINR": 900 },
+    { "id": "switchboard_replace", "description": "Replace a switchboard", "unit": "each", "rateINR": 600 },
+    { "id": "tap_replace", "description": "Replace a tap or mixer", "unit": "each", "rateINR": 700 },
+    { "id": "window_glass_sqft", "description": "Replace window glass", "unit": "sq ft", "rateINR": 150 },
+    { "id": "wardrobe_hinge", "description": "Replace a wardrobe hinge or channel", "unit": "each", "rateINR": 250 },
+    { "id": "deep_clean_bhk", "description": "Deep cleaning", "unit": "per BHK", "rateINR": 3500 },
+    { "id": "curtain_rod", "description": "Replace a curtain rod", "unit": "each", "rateINR": 500 }
+  ]
+}

@@ -20,7 +20,7 @@ export interface VisionLLM {
     system: string;
     instruction: string;
     images: LLMImage[];
-    schema: z.ZodType<T>;
+    schema: z.ZodType<T, z.ZodTypeDef, unknown>;
     maxTokens?: number;
     /** Fixture file name (src/ai/fixtures/{task}.json); ignored by real providers. */
     task?: string;

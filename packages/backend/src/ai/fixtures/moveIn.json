@@ -1,0 +1,38 @@
+{
+  "rooms": [
+    {
+      "room": "living",
+      "vantageIds": ["living-wide"],
+      "elements": [
+        { "elementId": "living.walls", "element": "Walls", "condition": "good", "notes": "Evenly painted, no visible marks.", "photoRefs": ["living/living-wide"] },
+        { "elementId": "living.floor", "element": "Floor", "condition": "good", "notes": "Vitrified tiles, clean, no cracks visible.", "photoRefs": ["living/living-wide"] }
+      ]
+    },
+    {
+      "room": "kitchen",
+      "vantageIds": ["kitchen-counter"],
+      "elements": [
+        { "elementId": "kitchen.counter", "element": "Counter", "condition": "good", "notes": "Granite counter intact.", "photoRefs": ["kitchen/kitchen-counter"] },
+        { "elementId": "kitchen.wall-tiles", "element": "Wall tiles", "condition": "good", "notes": "All tiles above the counter intact, no chips.", "photoRefs": ["kitchen/kitchen-counter"] }
+      ]
+    },
+    {
+      "room": "bedroom1",
+      "vantageIds": ["bed1-wall"],
+      "elements": [
+        { "elementId": "bedroom1.walls", "element": "Walls", "condition": "minor_wear", "notes": "Two small nail holes on the wall opposite the window.", "photoRefs": ["bedroom1/bed1-wall"] }
+      ]
+    },
+    {
+      "room": "bathroom1",
+      "vantageIds": ["bath1-fittings"],
+      "elements": [
+        { "elementId": "bathroom1.taps", "element": "Taps and mixer", "condition": "good", "notes": "Chrome finish, no leaks visible.", "photoRefs": ["bathroom1/bath1-fittings"] },
+        { "elementId": "bathroom1.shower", "element": "Shower head", "condition": "not_visible", "notes": "Out of frame.", "photoRefs": [] }
+      ]
+    }
+  ],
+  "overallCondition": "good",
+  "summary": "The flat is in good condition. The only existing marks are two small nail holes in bedroom 1.",
+  "confidence": 0.86
+}

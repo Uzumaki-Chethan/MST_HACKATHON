@@ -1,0 +1,57 @@
+{
+  "findings": [
+    {
+      "findingId": "f1",
+      "room": "kitchen",
+      "elementId": "kitchen.wall-tiles",
+      "vantageId": "kitchen-counter",
+      "change": "new_damage",
+      "severity": 2,
+      "description": "One wall tile above the counter is cracked diagonally; it was intact at move-in.",
+      "beforePhotoRef": "kitchen-counter-before",
+      "afterPhotoRef": "kitchen-counter-after",
+      "rateItemId": "tile_replace",
+      "quantity": 1,
+      "confidence": 0.84
+    },
+    {
+      "findingId": "f2",
+      "room": "living",
+      "elementId": "living.walls",
+      "vantageId": "living-wide",
+      "change": "normal_wear",
+      "severity": 1,
+      "description": "Paint has faded slightly near the window, consistent with normal living.",
+      "beforePhotoRef": "living-wide-before",
+      "afterPhotoRef": "living-wide-after",
+      "rateItemId": "paint_wall_sqft",
+      "quantity": 120,
+      "confidence": 0.78
+    },
+    {
+      "findingId": "f3",
+      "room": "bedroom1",
+      "elementId": "bedroom1.walls",
+      "vantageId": "bed1-wall",
+      "change": "none",
+      "severity": 1,
+      "description": "Same two nail holes as at move-in; no new marks.",
+      "beforePhotoRef": "bed1-wall-before",
+      "afterPhotoRef": "bed1-wall-after",
+      "confidence": 0.9
+    },
+    {
+      "findingId": "f4",
+      "room": "bathroom1",
+      "elementId": "bathroom1.taps",
+      "vantageId": "bath1-fittings",
+      "change": "none",
+      "severity": 1,
+      "description": "Taps unchanged.",
+      "beforePhotoRef": "bath1-fittings-before",
+      "afterPhotoRef": "bath1-fittings-after",
+      "confidence": 0.88
+    }
+  ],
+  "summary": "One new cracked kitchen tile. Faded living-room paint is normal wear and is not deductible."
+}
