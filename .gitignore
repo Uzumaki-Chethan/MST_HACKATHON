@@ -34,3 +34,6 @@ data/
 # platformio
 firmware/**/.pio/
 data-*/
+
+# local browser-test artefacts
+.playwright-mcp/

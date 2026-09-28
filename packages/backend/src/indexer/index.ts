@@ -72,6 +72,27 @@ function keyOf(args: Record<string, string | string[]>, names: string[], skip?: 
   return null;
 }
 
+/**
+ * Indexed events, the block cursor and keeper/agent job keys belong to one deployment. When the
+ * contracts (or their deploy block) change, e.g. after a testnet redeploy, start over from the new
+ * DEPLOY_BLOCK instead of resuming the old cursor. Content-addressed data (evidence, manifests,
+ * reports) is kept: it stays valid across deployments.
+ */
+export function resetOnNewDeployment(db: Db, chainId: number, watched: Watched[], firstBlock: number, log: (m: string) => void) {
+  const fingerprint = JSON.stringify({ chainId, firstBlock, contracts: watched.map((w) => `${w.name}:${w.address}`).sort() });
+  const stored = db.get<{ value: string }>("SELECT value FROM kv WHERE key = ?", ["deployment"])?.value;
+  if (stored === fingerprint) return;
+  db.transaction(() => {
+    if (stored !== undefined) {
+      db.run("DELETE FROM events");
+      db.run("DELETE FROM indexer_state");
+      db.run("DELETE FROM jobs");
+    }
+    db.run("INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", ["deployment", fingerprint]);
+  });
+  if (stored !== undefined) log(`new deployment detected: cleared indexed events and jobs, re-indexing from block ${firstBlock}`);
+}
+
 export type Indexer = { events: IndexerEvents; start(): void; stop(): void; pollOnce(): Promise<number> };
 
 export function startIndexer(opts: {
@@ -89,6 +110,7 @@ export function startIndexer(opts: {
   const firstBlock = opts.startBlock ?? DEPLOY_BLOCK[chainId] ?? 0;
 
   let stopped = false;
+  let checkedDeployment = false; // done on the first poll, so an indexer that never polls never clears anything
   let timer: NodeJS.Timeout | undefined;
   let backoff = POLL_MS;
 
@@ -105,6 +127,10 @@ export function startIndexer(opts: {
   /** Indexes up to MAX_RANGE blocks. Returns how many new events were stored. */
   async function pollOnce(): Promise<number> {
     if (watched.length === 0) return 0;
+    if (!checkedDeployment) {
+      resetOnNewDeployment(db, chainId, watched, firstBlock, log);
+      checkedDeployment = true;
+    }
     const state = db.get<{ last_block: number }>("SELECT last_block FROM indexer_state WHERE id = 1");
     const from = state ? state.last_block + 1 : firstBlock;
     const latest = await source.getBlockNumber();
