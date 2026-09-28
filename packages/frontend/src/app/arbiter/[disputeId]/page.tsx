@@ -17,7 +17,8 @@ import { useTx } from "@/hooks/useTx";
 import { getManifest, postManifest } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { describeError } from "@/lib/labels";
-import { bit, type Attestation, type Claim } from "@/lib/lease";
+import { bit, type Attestation, type Claim, type Tranche } from "@/lib/lease";
+import { ClaimedMilestone, type Agreement } from "@/app/build/[id]/panels";
 
 type Dispute = {
   escrow: `0x${string}`; agreementId: bigint; trancheIdx: number; payer: `0x${string}`; payee: `0x${string}`;
@@ -151,7 +152,9 @@ function DisputeDetail({ id }: { id: string }) {
             </div>
           );
         })}
-        {!isRental && <Notice>Reference and site photos for milestone disputes arrive with the BuildSafe screens.</Notice>}
+        {!isRental && x.escrow.toLowerCase() === contracts.milestone.address?.toLowerCase() && (
+          <MilestoneEvidence id={String(x.agreementId)} idx={x.trancheIdx} />
+        )}
       </section>
 
       {canVote ? (
@@ -170,4 +173,14 @@ function DisputeDetail({ id }: { id: string }) {
       )}
     </div>
   );
+}
+
+/** Reference vs site photos and the AI check for a disputed milestone (read-only view of the project panel). */
+function MilestoneEvidence({ id, idx }: { id: string; idx: number }) {
+  const { contracts } = useNest();
+  const m = contracts.milestone;
+  const t = useReadContract({ address: m.address!, abi: m.abi, functionName: "getTranche", args: [BigInt(id), idx] }).data as unknown as Tranche | undefined;
+  const a = useReadContract({ address: m.address!, abi: m.abi, functionName: "getAgreement", args: [BigInt(id)] }).data as unknown as Agreement | undefined;
+  if (!t || !a) return <p className="text-sm text-slate-500">Loading the milestone evidence…</p>;
+  return <ClaimedMilestone id={id} idx={idx} t={t} a={a} role={null} />;
 }

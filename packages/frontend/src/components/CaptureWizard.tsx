@@ -3,7 +3,7 @@
 // Walks the inspection template vantage by vantage, uploads each photo, then posts the bundle manifest.
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
-import { INSPECTION_TEMPLATES } from "@nestledger/shared";
+import { INSPECTION_TEMPLATES, type Vantage } from "@nestledger/shared";
 import type { Bundle } from "@nestledger/shared/schemas";
 import { postManifest, uploadEvidence, type EvidenceChecks, type EvidenceUpload } from "@/lib/api";
 import { describeError } from "@/lib/labels";
@@ -40,17 +40,20 @@ function useGeo() {
 
 export function CaptureWizard({
   context,
-  template,
+  template = "compact",
+  vantages: customVantages,
   ghosts = {},
   onDone,
 }: {
   context: Context;
-  template: "full" | "compact";
+  template?: "full" | "compact";
+  /** Overrides the room template, e.g. a milestone's agreed vantage points. */
+  vantages?: Vantage[];
   ghosts?: Record<string, string>;
   onDone: (bundleHash: `0x${string}`, bundle: Bundle) => void;
 }) {
   const { address } = useAccount();
-  const vantages = INSPECTION_TEMPLATES[template];
+  const vantages = customVantages?.length ? customVantages : INSPECTION_TEMPLATES[template];
   const [shots, setShots] = useState<Record<string, Shot>>({});
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);

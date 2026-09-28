@@ -19,7 +19,8 @@ import { aiMoveIn, getManifest, getReport } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { describeError } from "@/lib/labels";
 import { nextStep, roleOf, type Lease, type Tranche } from "@/lib/lease";
-import { ClaimReview, ClaimWindow, ClosedSummary, DisputeStatus, PaidSoFar, StartMoveOut, useClaimState } from "./moveout";
+import { DisputeStatus } from "@/components/DisputeStatus";
+import { ClaimReview, ClaimWindow, ClosedSummary, PaidSoFar, StartMoveOut, useClaimState } from "./moveout";
 
 export default function LeasePage({ params }: { params: { id: string } }) {
   const { contracts } = useNest();
@@ -114,6 +115,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function ActionPanel({ id, l, t, me }: { id: string; l: Lease; t?: Tranche; me: "tenant" | "landlord" | null }) {
+  const { contracts } = useNest();
   const status = LeaseStatus[l.status];
   const baseline = BaselineStatus[l.baseline];
   const now = Math.floor(Date.now() / 1000);
@@ -127,7 +129,7 @@ function ActionPanel({ id, l, t, me }: { id: string; l: Lease; t?: Tranche; me: 
       <div className="space-y-4">
         {tranche === "Open" && <ClaimWindow id={id} l={l} t={t} me={me} />}
         {(tranche === "Claimed" || tranche === "Disputed") && <ClaimReview id={id} t={t} me={me} />}
-        {tranche === "Disputed" && <><PaidSoFar t={t} /><DisputeStatus id={id} /></>}
+        {tranche === "Disputed" && <><PaidSoFar t={t} /><DisputeStatus escrow={contracts.rental.address} agreementId={id} /></>}
         {(tranche === "Settled" || tranche === "Refunded") && <ClosedSummary t={t} me={me} />}
       </div>
     );
