@@ -27,6 +27,20 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
+- 2026-09-29 — **A4 merged to main (`lap1/a4-deploy-seed`). Testnet v2 is LIVE, verified on MSTScan, and seeded.** All addresses are in `@nestledger/shared` `addresses[91562037]` (DEPLOY_BLOCK 5789828):
+  - NestRegistry `0x53cdf6bfF53357f60c5eC9Dd4552f243837ec9f8` · NestPassport `0x7d8706C27ed1385E37a516Bd1094Fc0e4a3B8002`
+  - DisputeResolver `0x7868AcEb5f4d043476793086198870d90Bfe78d4` · SocietyLedger `0xb19d9d63A50b14C35c3DFFF9e5b8C8E7C6923377`
+  - RentalEscrow `0xEF1ed68f299B47d78719b4a7a635E7e610753629` · MilestoneEscrow `0x20feF97Dae8b896f7ca08740Fb176D1b32a1846a`
+  - Wiring: MODULE_ROLE to resolver, ledger, rental and milestone; `ledger.setModules(rental, milestone, 0x0)` (no tanker); ATTESTOR_ROLE to AGENT; arbiters ARB1–3; tier params 2; dispute bond 0.001; arbiter voting window 300 s.
+  - **Seeded state (SPEC §11.2), all real txs, run by `packages/backend/scripts/seed.ts`:**
+    - **Society 1, "Green Meadows Residency".** Committee MEERA, ROHAN, C3, C4, C5, threshold 3. Tier limits ₹10,000 / ₹50,000, quorum 30%, votingPeriod 120 s, attestTimeout 60 s.
+    - Flats: A-101 PRIYA, B-304 ROHAN, C-202 MEERA, D-101 C3, D-102 C4, D-103 C5, weight 10 each, ₹2,000 maintenance; every owner paid once.
+    - **Plumbing history:** proposals 1–3 are PayVendor to PLUMBER for ₹1,200 / ₹1,500 / ₹1,350. Each has a generated invoice image (fictional vendor) and an invoice.v1 manifest, and each was attested clean by your agent (risk 0) and executed by the keeper. **The live ₹4,800 bill is NOT seeded**: it's the live demo beat (it'll be proposal 4).
+    - **Lease 1** (ROHAN → ASHA, B-304, rent ₹30,000, deposit ₹1,80,000, demo windows) is Active. Both periods are paid on time, ASHA's move-in baseline is 4 demo photos plus a move-in report from `/ai/move-in`, and the keeper presumed it accepted. ASHA's passport is **Tier 2, score 520, 2 on-time, 0 late**; closing this lease with no lost dispute takes her to Tier 3. The demo continues from **move-out**.
+    - **Project 1** (ROHAN → IMRAN, "Kitchen renovation, B-304"): 3 milestones (Demolition ₹20k, Civil + electrical ₹40k, Finishing ₹30k, 30% advances), each with a milestone-spec.v1 (2 vantage points + reference images). IMRAN accepted, milestone 0 was claimed with a `/ai/milestone/preview` report, your agent attested it, and ROHAN approved. **Milestone 1 is Open** for the live demo beat.
+  - Public API checked live: `/public/societies/1` shows balance ₹11,950 (₹16,000 collected, ₹4,050 spent), 6/6 flats paid this month, and `/ledger` has 11 items with invoice files. The first v2 deploy was replaced (see SPEC-CHANGES) after a seed-ordering bug recorded a permanent late payment for ASHA.
+  - **The backend (agent + keeper + indexer) is running on Laptop 1** against these addresses. Please test every page against v2 now.
+  - Next for me: README (contract + tx-hash tables, judge guide), `docs/demo-script.md`, hosting the backend, then a full dry run of the demo with the human.
 - 2026-09-29 — **A3 merged to main (`lap1/a3-society-tanker`).** SocietyLedger and the public society API are done; 61 contract tests pass. **TankerTrust and IoT are dropped by team decision** (SPEC-CHANGES): no `/iot` page and no Water tab. A `TankerOrder` proposal reverts `BadInput`. The build is now 7 contracts.
   - **Not on testnet yet.** `lap1/a4-deploy-seed` comes next and deploys all 7 at once. `addresses[31337]` holds a full local deploy. `deploy.ts --network localhost` now works with no env vars: attestor and arbiters fall back to hardhat accounts #1–#4.
   - **SocietyLedger behaviour you'll build against:**

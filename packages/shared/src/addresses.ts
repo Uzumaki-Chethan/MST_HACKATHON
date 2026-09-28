@@ -14,11 +14,14 @@ export const addresses: Record<number, Partial<Record<ContractName, `0x${string}
     SocietyLedger: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
   },
   91562037: {
-    NestRegistry: "0x87d7eeDF89Aeec6551534F54b80D23911A30F2a5",
-    NestPassport: "0xCaE95713df4206C3359409d489A5169b97bEb153",
-    RentalEscrow: "0xe5608B1C26D8d3E05a0C1846eEfB474eF87bedCb",
+    NestRegistry: "0x53cdf6bfF53357f60c5eC9Dd4552f243837ec9f8",
+    NestPassport: "0x7d8706C27ed1385E37a516Bd1094Fc0e4a3B8002",
+    RentalEscrow: "0xEF1ed68f299B47d78719b4a7a635E7e610753629",
+    MilestoneEscrow: "0x20feF97Dae8b896f7ca08740Fb176D1b32a1846a",
+    DisputeResolver: "0x7868AcEb5f4d043476793086198870d90Bfe78d4",
+    SocietyLedger: "0xb19d9d63A50b14C35c3DFFF9e5b8C8E7C6923377",
   },
 };
 
 /** Block each chain's contracts were deployed at (indexer START_BLOCK). */
-export const DEPLOY_BLOCK: Record<number, number> = { 31337: 0, 91562037: 5787626 };
+export const DEPLOY_BLOCK: Record<number, number> = { 31337: 0, 91562037: 5789828 };
