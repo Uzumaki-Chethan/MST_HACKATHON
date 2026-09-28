@@ -122,10 +122,26 @@ export const getCaptureSession = (token: string) =>
     `/capture-sessions/${token}`,
   );
 
-// --- public (no auth). Shapes are aggregates owned by WP-D; typed loosely until they land.
-export const getPublicSociety = (id: string | number) => request<Record<string, unknown>>(`/public/societies/${id}`);
-export const getPublicSocietyLedger = (id: string | number, cursor?: string) =>
-  request<Record<string, unknown>>(`/public/societies/${id}/ledger${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`);
+// --- public (no auth). Shapes owned by WP-D (CLAUDE1.md, A3); amounts are decimal wei strings, addresses lowercase.
+export type PublicSociety = {
+  societyId: string;
+  name: string;
+  totals: {
+    balanceWei: string; committedWei: string; availableWei: string; totalCollectedWei: string; totalSpentWei: string;
+    collectedThisMonthWei: string; spentThisMonthWei: string;
+  };
+  monthly: { month: string; collectedWei: string; spentWei: string }[];
+  spendByCategory: { category: string; spentWei: string }[];
+  updatedAt: string;
+};
+export type PublicLedgerItem = {
+  id: number; txHash: Hex; timestamp: number; direction: "in" | "out"; type: string; amountWei: string;
+  proposalId?: string; invoiceFiles?: string[];
+  approvers?: { member: string; overrideReasonHash: Hex | null; overrideText: string | null }[];
+};
+export const getPublicSociety = (id: string | number) => request<PublicSociety>(`/public/societies/${id}`);
+export const getPublicSocietyLedger = (id: string | number, cursor?: number) =>
+  request<{ items: PublicLedgerItem[]; nextCursor: number | null }>(`/public/societies/${id}/ledger${cursor ? `?cursor=${cursor}` : ""}`);
 export type PublicPassport = {
   address: string;
   hasPassport: boolean;
