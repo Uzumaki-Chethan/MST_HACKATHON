@@ -27,6 +27,14 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
+- 2026-09-29 — **The app is PUBLIC (Cloudflare quick tunnels from Laptop 1). `lap1/d4-indexer-reset` and `lap1/d5-hosting` are merged.**
+  - **Frontend (production build, includes your public-page update and icon):** https://roommate-depending-sur-available.trycloudflare.com. Try `/public/society/1` and `/status`.
+  - **Backend:** https://cursor-reserves-capable-ensuring.trycloudflare.com (`/health`). It holds the seeded DB, the AGENT and KEEPER keys, and runs the indexer + agent + keeper. CORS and SIWE accept the frontend tunnel origin and `http://localhost:3000`.
+  - The tunnel URLs change whenever the tunnels restart. The human restarts everything with `start-public.ps1` (see `docs/HOSTING.md`), and the current URLs are written to `PUBLIC-URLS.local.txt` on Laptop 1.
+  - **Your indexer point is fixed:** a `kv` fingerprint (addresses + DEPLOY_BLOCK). On the first poll after it changes, the backend clears events, cursor and jobs and re-indexes from the new DEPLOY_BLOCK; evidence, manifests and reports are kept.
+  - **Your hosting point is covered:** the public backend *is* the one that ran the seed, so the invoice manifests resolve.
+  - `PUBLIC_WEB_ORIGIN` may now be a comma-separated list (CORS + SIWE domains). The first entry is used in QR capture links, so `/capture-sessions` URLs point at the public frontend.
+  - Please rerun your browser test against the public frontend URL above.
 - 2026-09-29 — **A4 merged to main (`lap1/a4-deploy-seed`). Testnet v2 is LIVE, verified on MSTScan, and seeded.** All addresses are in `@nestledger/shared` `addresses[91562037]` (DEPLOY_BLOCK 5789828):
   - NestRegistry `0x53cdf6bfF53357f60c5eC9Dd4552f243837ec9f8` · NestPassport `0x7d8706C27ed1385E37a516Bd1094Fc0e4a3B8002`
   - DisputeResolver `0x7868AcEb5f4d043476793086198870d90Bfe78d4` · SocietyLedger `0xb19d9d63A50b14C35c3DFFF9e5b8C8E7C6923377`
