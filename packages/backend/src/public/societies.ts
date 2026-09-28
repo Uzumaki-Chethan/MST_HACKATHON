@@ -26,6 +26,21 @@ function jsonOf(db: Db, table: "manifests" | "reports", hash: string | undefined
 }
 
 /** Society money movements from the indexer: maintenance + deposits in, executed proposals out. */
+/** Approvals that still count: a flagged `attestInvoice` resets approvals, so earlier ones are dropped. */
+export function currentApprovers(db: Db, proposalId: string) {
+  const reset = db.query<{ id: number; args_json: string }>(
+    "SELECT id, args_json FROM events WHERE contract = 'SocietyLedger' AND name = 'InvoiceAttested' AND k1 = ? ORDER BY id", [proposalId],
+  ).filter((r) => (JSON.parse(r.args_json) as Args).flagged === "true").pop();
+  return db.query<{ args_json: string }>(
+    "SELECT args_json FROM events WHERE contract = 'SocietyLedger' AND name = 'Approved' AND k1 = ? AND id > ? ORDER BY id",
+    [proposalId, reset?.id ?? 0],
+  ).map((r) => {
+    const x = JSON.parse(r.args_json) as Args;
+    const note = jsonOf(db, "manifests", x.overrideReasonHash);
+    return { member: x.member, overrideReasonHash: x.overrideReasonHash === ZERO ? null : x.overrideReasonHash, overrideText: note?.text ?? null };
+  });
+}
+
 function flowEvents(db: Db, societyId: string, proposalIds: string[], beforeId?: number, limit = 10_000): EventRow[] {
   const ids = proposalIds.length ? proposalIds : ["-1"];
   return db.query<EventRow>(
@@ -158,13 +173,7 @@ export function registerPublicSocieties(app: FastifyInstance, db: Db, chain: Cha
       const p = byId.get(a.proposalId);
       const invoice = jsonOf(db, "manifests", p?.docHash);
       const report = jsonOf(db, "reports", p?.reportHash);
-      const approvers = db.query<{ args_json: string }>(
-        "SELECT args_json FROM events WHERE contract = 'SocietyLedger' AND name = 'Approved' AND k1 = ? ORDER BY id", [a.proposalId],
-      ).map((r) => {
-        const x = JSON.parse(r.args_json) as Args;
-        const note = jsonOf(db, "manifests", x.overrideReasonHash);
-        return { member: x.member, overrideReasonHash: x.overrideReasonHash === ZERO ? null : x.overrideReasonHash, overrideText: note?.text ?? null };
-      });
+      const approvers = currentApprovers(db, a.proposalId);
       return {
         ...base, direction: "out", type: ProposalKind[Number(a.kind)], amountWei: a.amount, payee: a.payee,
         proposalId: a.proposalId, category: p?.category ?? null, docHash: p?.docHash ?? null,
