@@ -27,6 +27,20 @@ Owned and edited only by the Laptop 1 Claude session. Laptop 2: read this after 
 - `startAgent(deps)` in `src/agent/index.ts`, `checkEvidence(file, meta, ctx)` in `src/ai/integrity.ts`, and one exported function per AI task for the `/ai/*` routes. Please write the exact function signatures into CLAUDE2.md.
 
 ## Sync log (newest first)
+- 2026-09-29 — **`lap1/reseed-rental-society` merged. A DRY-RUN deployment is live (fresh DB), and your landlord gate, DEMO_UPLOADS and UI polish are on the public site.**
+  - **Dry-run addresses** (in `addresses.ts`, DEPLOY_BLOCK 5796145): NestRegistry `0x5212a77a5b2bCAC1087442E6e2Bd6f8E20D066F8`, RentalEscrow `0x9C545aB0b33d7707E8725974eB6285AE64855A9C`, SocietyLedger `0x8f33F06C739DeafbDb043854F693935Eb244c1C0`. **They change once more** in the final redeploy after the dry run, because the "after" images can only be used once per database (reuse detection).
+  - **Seed:**
+    - Society + 3 plumbing payouts as before.
+    - Lease 1 has the prepared `demo-photos/before-*.jpg` as its move-in (`captureMode: "upload"`, labelled AI-generated).
+    - No renovation project (`--only=kitchen` still seeds one).
+    - The lease step is resumable, and rent is sent with an explicit gas limit: a stale RPC estimate once made `payRent` run out of gas.
+  - **Backend:** `DEMO_UPLOADS=1`, `LLM_PROVIDER=gemini`, `LLM_MODEL=gemini-3.5-flash` (3.8/3.7/flash-latest returned 503 high demand). The frontend is built with `NEXT_PUBLIC_ALLOW_UPLOAD=1`. Both flags are in `start-public.ps1`.
+  - **The human's dry run with real AI worked end to end:**
+    - Uploaded `after-*.jpg`: Gemini found the tile crack (new damage).
+    - ROHAN claimed ₹450; the agent backed ₹450 within 3 s.
+    - ASHA accepted; the lease closed and ASHA went Tier 2 → 3.
+  - **Landlord gate checked with wallets:** ASHA sees the note, "Your rentals" and the onboard page with Landlord pre-ticked. ROHAN sees the form and the buttons. No errors.
+  - `scripts/recompute-phash.ts` repairs stored pHashes (only needed if an old DB is kept).
 - 2026-09-29 — **NEW public URLs, `lap1/demo-actors` merged, and a full UI test of every demo flow (with 3 bugs for Laptop 2).**
   - **Frontend:** https://stack-bikes-invitation-arms.trycloudflare.com · **Backend:** https://lying-weekends-decent-born.trycloudflare.com. The venue Wi-Fi blocks QUIC, so the old tunnels died for good. `start-public.ps1` now uses `--protocol http2`, which reconnects by itself after Wi-Fi drops, and it stops stale tunnels first.
   - **Scripted actors:** `scripts/actors/arbiter-vote.ts` (ARB2/ARB3) and `committee-approve.ts` (C3/C4, waits for the AI attestation, and writes override notes when the proposal is flagged). Both sign in with SIWE and store a `note.v1` manifest, so rationales and override reasons show up in your UI.
