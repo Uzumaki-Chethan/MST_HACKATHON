@@ -54,7 +54,7 @@ function Dashboard({ id, d, ledger }: { id: string; d: SocietyData; ledger: stri
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold text-slate-900">{s.name}</h1>
+        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">{s.name}</h1>
         <p className="text-sm text-slate-600">
           <span className="chip mr-2 bg-accent-light text-accent-dark">Verified on MST Testnet</span>
           Every rupee in and out of this treasury is a public contract transaction.{" "}
@@ -65,7 +65,10 @@ function Dashboard({ id, d, ledger }: { id: string; d: SocietyData; ledger: stri
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {([["Treasury balance", s.balance], ["Available", d.available], ["Reserved for open proposals", s.committed], ["Collected (all time)", s.totalCollected], ["Spent (all time)", s.totalSpent]] as const).map(([label, wei]) => (
-          <div key={label} className="card"><p className="text-xs uppercase text-slate-500">{label}</p><Amount wei={wei} /></div>
+          <div key={label} className={`card space-y-2 ${label === "Treasury balance" ? "border-accent/30 bg-gradient-to-br from-accent-light/50 to-white" : ""}`}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+            <Amount wei={wei} large />
+          </div>
         ))}
       </section>
 

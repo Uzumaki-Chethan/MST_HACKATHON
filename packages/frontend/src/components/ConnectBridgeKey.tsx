@@ -44,9 +44,16 @@ export function ConnectBridgeKey() {
     const connector = pickConnector(connectors);
     if (!hasWallet || !connector) {
       return (
-        <p className="text-sm text-slate-600">
-          BridgeKey not detected. Install the BridgeKey Chrome extension, or open this page in the BridgeKey Android app&apos;s browser.
-        </p>
+        <details className="group relative">
+          <summary className="chip cursor-pointer list-none bg-amber-50 py-1 text-amber-800 ring-1 ring-inset ring-amber-200 hover:bg-amber-100 [&::-webkit-details-marker]:hidden">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            BridgeKey not detected
+          </summary>
+          <div className="card absolute right-0 z-40 mt-2 w-72 p-4 text-sm text-slate-600">
+            Install the BridgeKey Chrome extension, or open this page in the BridgeKey Android app&apos;s browser. The public ledger,
+            passports and status pages work without a wallet.
+          </div>
+        </details>
       );
     }
     return (
@@ -70,7 +77,10 @@ export function ConnectBridgeKey() {
   return (
     <div className="flex flex-col items-end gap-1">
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <span className="font-mono text-sm text-slate-700">{shortHex(address)}</span>
+        <span className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 font-mono text-sm text-slate-700 shadow-sm" title={address}>
+          <span className={`h-2 w-2 rounded-full ${wrongChain ? "bg-amber-500" : "bg-emerald-500"}`} />
+          {shortHex(address)}
+        </span>
         {wrongChain ? (
           <button className="btn-primary" onClick={() => active && run(() => guard(active))}>
             Switch to {appChain.name}
@@ -80,10 +90,10 @@ export function ConnectBridgeKey() {
             {signingIn ? "Check BridgeKey…" : "Sign in"}
           </button>
         ) : (
-          <span className="chip bg-accent-light text-accent-dark">Signed in</span>
+          <span className="chip bg-accent-light text-accent-dark">✓ Signed in</span>
         )}
         <button
-          className="btn-secondary"
+          className="btn-ghost px-2.5"
           onClick={() => {
             signOut();
             disconnect();

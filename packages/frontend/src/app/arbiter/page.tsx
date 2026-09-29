@@ -13,7 +13,7 @@ export default function ArbiterListPage() {
   const { contracts } = useNest();
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Disputes assigned to you</h1>
+      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Disputes assigned to you</h1>
       <RequireWallet>
         <RequireDeployed address={contracts.resolver.address} name="DisputeResolver">
           <List />

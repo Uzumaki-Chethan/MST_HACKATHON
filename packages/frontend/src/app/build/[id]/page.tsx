@@ -50,7 +50,7 @@ function ProjectDetail({ id }: { id: string }) {
     <div className="space-y-6">
       <header className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold text-slate-900">Project #{id}</h1>
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Project #{id}</h1>
           <StatusChip kind="project" value={p.status} enumValues={ProjectStatus} />
         </div>
         <div className="grid gap-3 text-sm sm:grid-cols-3">

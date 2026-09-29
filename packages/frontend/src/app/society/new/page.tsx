@@ -18,7 +18,7 @@ export default function NewSocietyPage() {
   const { contracts } = useNest();
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Create a society treasury</h1>
+      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Create a society treasury</h1>
       <p className="text-sm text-slate-600">
         Maintenance goes into the SocietyLedger contract, and every payment out needs committee approvals by tier. Anyone can see the
         whole ledger on the public page, without a wallet.

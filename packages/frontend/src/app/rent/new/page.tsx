@@ -21,7 +21,7 @@ export default function NewLeasePage() {
   const { contracts } = useNest();
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Offer a lease</h1>
+      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Offer a lease</h1>
       <RequireWallet signedIn>
         <RequireDeployed address={contracts.rental.address} name="RentalEscrow">
           <OfferForm />

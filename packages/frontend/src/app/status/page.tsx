@@ -34,7 +34,7 @@ export default function StatusPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">System status</h1>
+      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">System status</h1>
 
       <section className="grid gap-4 sm:grid-cols-3">
         <div className="card space-y-1">

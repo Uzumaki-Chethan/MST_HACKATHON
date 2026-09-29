@@ -38,6 +38,12 @@ export function RequireDeployed({ address, name, children }: { address?: string;
 }
 
 export function Notice({ children, tone = "info" }: { children: React.ReactNode; tone?: "info" | "warn" | "error" }) {
-  const style = { info: "border-slate-200 bg-slate-50", warn: "border-amber-300 bg-amber-50", error: "border-red-300 bg-red-50" }[tone];
-  return <div className={`rounded-md border p-4 text-sm text-slate-700 ${style}`}>{children}</div>;
+  const style = { info: "border-slate-200 bg-white", warn: "border-amber-200 bg-amber-50", error: "border-red-200 bg-red-50" }[tone];
+  const dot = { info: "bg-accent", warn: "bg-amber-500", error: "bg-red-500" }[tone];
+  return (
+    <div className={`flex gap-3 rounded-xl border p-4 text-sm leading-relaxed text-slate-700 shadow-sm ${style}`}>
+      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${dot}`} aria-hidden />
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
 }

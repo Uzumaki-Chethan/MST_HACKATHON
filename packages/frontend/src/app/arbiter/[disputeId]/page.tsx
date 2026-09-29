@@ -99,7 +99,7 @@ function DisputeDetail({ id }: { id: string }) {
     <div className="space-y-6">
       <header className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold text-slate-900">Dispute #{id}</h1>
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Dispute #{id}</h1>
           <StatusChip kind="dispute" value={x.status} enumValues={DisputeStatusEnum} />
         </div>
         <p className="text-sm text-slate-600">

@@ -61,7 +61,7 @@ function LeaseDetail({ id }: { id: string }) {
     <div className="space-y-6">
       <header className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold text-slate-900">Lease #{id}</h1>
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Lease #{id}</h1>
           <StatusChip kind="lease" value={l.status} enumValues={LeaseStatus} />
           {LeaseStatus[l.status] !== "Offered" && <StatusChip kind="baseline" value={l.baseline} enumValues={BaselineStatus} />}
         </div>
