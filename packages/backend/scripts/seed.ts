@@ -232,61 +232,85 @@ async function seedHistory(societyId: bigint) {
 const COMPACT = [
   ["living", "living-wide", "living"], ["kitchen", "kitchen-counter", "kitchen"], ["bedroom1", "bed1-wall", "bedroom"], ["bathroom1", "bath1-fittings", "bath"],
 ] as const;
-// Prepared move-in images (AI-generated, visibly labelled). The live demo uploads the matching demo-photos/after-*.jpg.
+// Prepared move-in images (AI-generated, visibly labelled). Each demo lease gets its own set (demo-photos/set-N,
+// cropped differently) so reuse detection never links one lease's photos to another's; the live demo uploads
+// the same set's after-*.jpg.
 const DEMO_PHOTOS = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "demo-photos");
 
-/** Step 6: Lease #1 (ROHAN → ASHA, flat B-304) pre-staged up to "move-out". */
-async function seedLease(flats: Record<string, bigint>) {
-  log("\n[lease] ROHAN offers B-304 to ASHA");
+/** The demo leases: ROHAN rents to each tenant; lease 1 is the society flat B-304. */
+const DEMO_LEASES: { tenant: keyof typeof cast; flat: string | null; photos: string }[] = [
+  { tenant: "ASHA", flat: "B-304", photos: "set-1" },
+  { tenant: "PRIYA", flat: null, photos: "set-2" },
+  { tenant: "IMRAN", flat: null, photos: "set-3" },
+  { tenant: "C5", flat: null, photos: "set-4" },
+];
+
+/** Step 6: every demo lease pre-staged up to "move-out"; `--tenants=PRIYA,C5` limits it. */
+async function seedLeases(flats: Record<string, bigint>) {
+  const only = process.argv.find((a) => a.startsWith("--tenants="))?.split("=")[1].split(",");
+  const staged: { leaseId: bigint; tenant: string; photos: string }[] = [];
+  for (const d of DEMO_LEASES.filter((d) => !only || only.includes(d.tenant))) {
+    const leaseId = await stageLease(flats, d.tenant, d.flat, d.photos);
+    if (leaseId) staged.push({ leaseId, tenant: d.tenant, photos: d.photos });
+  }
+  log("\n[leases] ROHAN stays silent; the keeper presumes each baseline after the window (G1)");
+  for (const s of staged) {
+    await waitFor(`keeper → finalizeBaseline lease ${s.leaseId}`, async () => Number((await readRental.getLease(s.leaseId)).baseline) === 4, 240);
+  }
+  for (const s of staged) log(`  lease ${s.leaseId}: tenant ${s.tenant}, move-out uploads demo-photos/${s.photos}/after-*.jpg`);
+  return staged;
+}
+
+async function stageLease(flats: Record<string, bigint>, tenantName: keyof typeof cast, flat: string | null, photos: string): Promise<bigint | null> {
+  const tenant = cast[tenantName];
+  log(`\n[lease] ROHAN offers ${flat ?? "a flat outside the society"} to ${tenantName} (photos ${photos})`);
   const rent = inrToWei(30_000), deposit = inrToWei(180_000);
-  // Resume a lease this seed already offered (e.g. after a failed run) so the demo stays on lease #1.
+  // Resume a lease this seed already offered (e.g. after a failed run); skip one that is already staged.
   let leaseId: bigint = await readRental.nextId();
-  for (const id of (await readRental.agreementsOf(cast.ASHA.address)) as bigint[]) {
+  for (const id of (await readRental.agreementsOf(tenant.address)) as bigint[]) {
     const L = await readRental.getLease(id);
+    if (L.landlord !== cast.ROHAN.address) continue;
     // Offered, or signed but without a move-in baseline yet (a run that stopped part-way).
-    if ((Number(L.status) === 0 || (Number(L.status) === 1 && Number(L.baseline) === 0)) && L.landlord === cast.ROHAN.address) leaseId = id;
+    if (Number(L.status) === 0 || (Number(L.status) === 1 && Number(L.baseline) === 0)) leaseId = id;
+    else if (Number(L.status) === 1) { log(`  = lease ${id} is already staged`); return null; }
   }
   const resuming = leaseId < (await readRental.nextId());
   const termsHash = await manifest(cast.ROHAN, {
-    schema: "nestledger.lease-terms.v1", createdAt: now(), flatLabel: "B-304", rentINR: 30_000, maintenanceINR: 2_000,
+    schema: "nestledger.lease-terms.v1", createdAt: now(), flatLabel: flat ?? `Demo flat for ${tenantName}`, rentINR: 30_000, maintenanceINR: flat ? 2_000 : 0,
     depositINR: 180_000, depositMonths: 6, periodDays: W.period / 86400, periods: W.periods, graceDays: W.grace / 86400,
     houseRules: ["No structural changes", "Pets allowed with notice"], inspectionTemplate: "compact",
   });
   if (resuming) log(`  = resuming lease ${leaseId} (already offered)`);
   else await tx(`offerLease → lease ${leaseId}`, rentalAt(cast.ROHAN).offerLease({
-    tenant: cast.ASHA.address, flatId: flats["B-304"], rent, deposit, useTrustPricing: false, baseDepositMonths: 6,
+    tenant: tenant.address, flatId: flat ? flats[flat] : 0n, rent, deposit, useTrustPricing: false, baseDepositMonths: 6,
     period: W.period, periods: W.periods, grace: W.grace, baselineWindow: W.baselineWindow, claimWindow: W.claimWindow,
     responseWindow: W.responseWindowLease, termsHash,
   }));
   if (Number((await readRental.getLease(leaseId)).status) === 0) {
-    await tx(`signLease (deposit ${formatAmount(deposit)})`, rentalAt(cast.ASHA).signLease(leaseId, { value: deposit }));
+    await tx(`signLease (deposit ${formatAmount(deposit)})`, rentalAt(tenant).signLease(leaseId, { value: deposit }));
   }
   // Pay both periods now: period 0 is due at signing (+30 s grace) and paying early counts as on time.
-  // Paying after the baseline wait would record a permanent late payment and block ASHA from Tier 3.
+  // Paying after the baseline wait would record a permanent late payment and block the tenant from Tier 3.
   // Explicit gas: a load-balanced RPC can estimate against the state before the previous payment and run out of gas.
-  const due = rent + MAINTENANCE;
+  const due = rent + (flat ? MAINTENANCE : 0n);
   for (let k = Number((await readRental.getLease(leaseId)).paidPeriods); k < W.periods; k++) {
-    await tx(`payRent period ${k} (rent → ROHAN, maintenance → society)`, rentalAt(cast.ASHA).payRent(leaseId, { value: due, gasLimit: 400_000 }));
+    await tx(`payRent period ${k}`, rentalAt(tenant).payRent(leaseId, { value: due, gasLimit: 400_000 }));
   }
 
-  // Move-in baseline: the 4 prepared demo images, uploaded (labelled "not live camera") → bundle → AI move-in report → submitBaseline.
+  // Move-in baseline: the set's 4 prepared images, uploaded (labelled "not live camera") → bundle → AI move-in report → submitBaseline.
   const items = [];
   for (const [room, vantageId, file] of COMPACT) {
-    const up = await upload(cast.ASHA, fs.readFileSync(path.join(DEMO_PHOTOS, `before-${file}.jpg`)), {
+    const up = await upload(tenant, fs.readFileSync(path.join(DEMO_PHOTOS, photos, `before-${file}.jpg`)), {
       context: { type: "lease", id: leaseId.toString(), stage: "move-in" }, kind: "photo", room, vantageId, captureMode: "upload",
     });
     items.push(bundleItem(up, { kind: "photo", room, vantageId, captureMode: "upload" }));
   }
-  const bundleHash = await manifest(cast.ASHA, {
+  const bundleHash = await manifest(tenant, {
     schema: "nestledger.bundle.v1", context: { type: "lease", id: leaseId.toString(), stage: "move-in" },
-    createdBy: cast.ASHA.address.toLowerCase(), createdAt: now(), items,
+    createdBy: tenant.address.toLowerCase(), createdAt: now(), items,
   });
-  const { reportHash } = await api(cast.ASHA, "/ai/move-in", { leaseId: leaseId.toString(), bundleHash });
-  await tx("submitBaseline (ASHA documents move-in)", rentalAt(cast.ASHA).submitBaseline(leaseId, bundleHash, reportHash));
-  log("  ROHAN stays silent; the keeper presumes the baseline after the window (G1)");
-  await waitFor("keeper → finalizeBaseline", async () => Number((await readRental.getLease(leaseId)).baseline) === 4, 240);
-
-  log(`  lease ${leaseId} is ready for the live move-out beat`);
+  const { reportHash } = await api(tenant, "/ai/move-in", { leaseId: leaseId.toString(), bundleHash });
+  await tx(`submitBaseline (${tenantName} documents move-in)`, rentalAt(tenant).submitBaseline(leaseId, bundleHash, reportHash));
   return leaseId;
 }
 
@@ -374,13 +398,13 @@ async function main() {
 
   const { societyId, flats } = await seedSociety();
   if (!ONLY || ONLY === "history") await seedHistory(societyId);
-  const leaseId = !ONLY || ONLY === "lease" ? await seedLease(flats) : undefined;
+  const leases = !ONLY || ONLY === "lease" ? await seedLeases(flats) : [];
   // BuildSafe is out of the demo (team decision); run --only=kitchen to seed the renovation project anyway.
   const projectId = ONLY === "kitchen" ? await seedKitchen() : undefined;
 
   log("\nSeed complete.");
   log(`  public dashboard   ${config.publicWebOrigin}/public/society/${societyId}`);
-  if (leaseId) log(`  lease              ${config.publicWebOrigin}/rent/${leaseId}`);
+  for (const l of leases) log(`  lease (${l.tenant.padEnd(5)})      ${config.publicWebOrigin}/rent/${l.leaseId}   upload demo-photos/${l.photos}/after-*.jpg`);
   if (projectId) log(`  kitchen project    ${config.publicWebOrigin}/build/${projectId}`);
 }
 
