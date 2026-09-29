@@ -95,7 +95,8 @@ describe("milestone code rules", () => {
   });
 });
 
-async function setupMilestone(tainted = false) {
+/** `true`: the sink photo looks reused. "stale": the sink photo is an upload with no EXIF time. */
+async function setupMilestone(tainted: boolean | "stale" = false) {
   const vps = ["tiles", "counter", "sink"];
   const refs: Record<string, string> = {};
   for (const v of vps) refs[v] = await storeFile(db, await image());
@@ -110,7 +111,9 @@ async function setupMilestone(tainted = false) {
   chainMock.caps = [inrToWei(10_000), inrToWei(10_000), inrToWei(10_000)];
   const items = [];
   for (const v of vps) {
-    items.push({ hash: await storeFile(db, await image(), { checks: tainted && v === "sink" ? { reusedOf: "0xabc" } : { fresh: true } }), kind: "photo", mime: "image/jpeg", vantageId: v, captureMode: "live", capturedAt: iso() });
+    const odd = v === "sink" ? tainted : false;
+    const checks = odd === "stale" ? { stale: true, exifTime: null } : odd ? { reusedOf: "0xabc" } : { fresh: true };
+    items.push({ hash: await storeFile(db, await image(), { checks }), kind: "photo", mime: "image/jpeg", vantageId: v, captureMode: odd === "stale" ? "upload" : "live", capturedAt: iso() });
   }
   return storeManifest(db, { schema: "nestledger.bundle.v1", context: { type: "project", id: "7", stage: "milestone" }, createdBy: PLUMBER, createdAt: iso(), items } as never);
 }
@@ -146,6 +149,28 @@ describe("runMilestonePreview (fixtures)", () => {
     expect(r.integrity.join(" ")).toMatch(/reused/);
     const clean = await runMilestonePreview({ projectId: "7", milestoneIndex: 1, bundleHash: await setupMilestone() }, deps);
     expect(clean.integrity).toEqual([]);
+  });
+
+  it("DEMO_UPLOADS=1: an uploaded photo with no EXIF time earns support; unset, it earns ₹0", async () => {
+    const before = process.env.DEMO_UPLOADS;
+    try {
+      delete process.env.DEMO_UPLOADS;
+      const bundleHash = await setupMilestone("stale");
+      const strict = await runMilestonePreview({ projectId: "7", milestoneIndex: 1, bundleHash }, deps);
+      expect(strict.supportedPreview).toEqual(["0", "0", "0"]);
+      expect(strict.integrity.join(" ")).toMatch(/old photo time/);
+
+      process.env.DEMO_UPLOADS = "1";
+      const demo = await runMilestonePreview({ projectId: "7", milestoneIndex: 1, bundleHash }, deps);
+      expect(demo.integrity).toEqual([]);
+      expect(demo.supportedPreview[0]).toBe(inrToWei(10_000).toString());
+      // Reuse still taints in demo mode.
+      const reused = await runMilestonePreview({ projectId: "7", milestoneIndex: 1, bundleHash: await setupMilestone(true) }, deps);
+      expect(reused.supportedPreview).toEqual(["0", "0", "0"]);
+    } finally {
+      if (before === undefined) delete process.env.DEMO_UPLOADS;
+      else process.env.DEMO_UPLOADS = before;
+    }
   });
 });
 

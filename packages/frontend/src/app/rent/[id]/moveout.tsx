@@ -349,7 +349,7 @@ export function ClaimReview({ id, t, me }: { id: string; t: Tranche; me: "tenant
                   </label>
                 )}
               </div>
-              {f && <div className="mt-2"><BeforeAfter before={photos.before.get(f.vantageId)} after={photos.after.get(f.vantageId)} label={f.description} /></div>}
+              {f && <div className="mt-2"><BeforeAfter before={photos.before.get(f.vantageId)} after={photos.after.get(f.vantageId)} label={f.description} uploaded={photos.uploaded} /></div>}
             </div>
           );
         })}

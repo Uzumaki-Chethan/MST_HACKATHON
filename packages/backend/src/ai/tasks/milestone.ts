@@ -21,7 +21,7 @@ import {
   storeReport,
   type AiDeps,
 } from "../common.js";
-import { isTainted } from "../integrity.js";
+import { demoUploads, isTainted } from "../integrity.js";
 import { prepareImage, PROMPT_VERSION, type LLMImage } from "../llm.js";
 import { readMilestone } from "../onchain.js";
 import { SYSTEM_PROMPT } from "../prompts/system.js";
@@ -82,7 +82,8 @@ export function integrityIssues(deps: Pick<AiDeps, "db">, bundleHash: string): s
         const why = [
           c.reusedOf && "looks reused from earlier evidence",
           c.fresh === false && "was not captured live within 5 minutes of upload",
-          c.stale && "has a missing or old photo time",
+          c.stale && !demoUploads() && "has a missing or old photo time",
+          c.duplicateOf && "is an exact copy of an earlier upload",
         ].filter(Boolean).join(", ");
         return `Photo ${p.item.vantageId ?? p.item.hash.slice(0, 10)} ${why}.`;
       });

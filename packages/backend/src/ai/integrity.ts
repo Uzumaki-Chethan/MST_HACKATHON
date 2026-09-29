@@ -116,8 +116,16 @@ export async function checkEvidence(file: Buffer, meta: EvidenceMeta, ctx: Integ
   return result;
 }
 
+/**
+ * Demo switch (SPEC-CHANGES 2026-09-29): the demo uses prepared, labelled room images uploaded through the
+ * capture wizard. With DEMO_UPLOADS=1 a missing or old EXIF time (`stale`) no longer taints an uploaded photo;
+ * reuse and duplicates still do. Read at call time so tests can toggle it.
+ */
+export const demoUploads = () => process.env.DEMO_UPLOADS === "1";
+
 /** A photo that must not earn AI support (SPEC §6.5 consequences). */
 export function isTainted(checks: Partial<IntegrityResult> | null | undefined): boolean {
   if (!checks) return false;
+  if (demoUploads()) return !!checks.reusedOf || !!checks.duplicateOf || checks.fresh === false;
   return !!checks.reusedOf || checks.fresh === false || checks.stale === true;
 }

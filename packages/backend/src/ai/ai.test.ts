@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import sharp from "sharp";
 import { hashBytes, hashJson } from "@nestledger/shared";
 import { openDb, type Db } from "../db/index.js";
-import { checkEvidence, perceptualHash } from "./integrity.js";
+import { checkEvidence, isTainted, perceptualHash } from "./integrity.js";
 import { createLLM } from "./llm.js";
 import { runMoveIn } from "./tasks/moveIn.js";
 import { runMoveOut } from "./tasks/moveOut.js";
@@ -14,8 +14,10 @@ const baselineMock = vi.hoisted(() => ({ value: { status: "Agreed", baselineRepo
 vi.mock("./lease.js", () => ({ readLeaseBaseline: async () => baselineMock.value }));
 
 // Random coloured rectangles: distinct structure per call, so perceptual hashes differ between photos.
-const noisyJpeg = () => {
-  const r = () => Math.floor(Math.random() * 256);
+/** Random shapes; pass a seed for a reproducible image (pHash distances on synthetic images vary run to run). */
+const noisyJpeg = (seed?: number) => {
+  let x = seed ?? 0;
+  const r = seed === undefined ? () => Math.floor(Math.random() * 256) : () => ((x = (x * 1103515245 + 12345) % 2 ** 31) >> 8) % 256;
   const rects = Array.from({ length: 12 }, () =>
     `<rect x="${r()}" y="${r() % 200}" width="${40 + (r() % 120)}" height="${30 + (r() % 90)}" fill="rgb(${r()},${r()},${r()})"/>`).join("");
   return sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240"><rect width="320" height="240" fill="rgb(${r()},${r()},${r()})"/>${rects}</svg>`))
@@ -63,9 +65,29 @@ beforeEach(() => {
   deps = { db, llm: createLLM(), chain: {} as AiDeps["chain"] };
 });
 
+describe("isTainted and DEMO_UPLOADS", () => {
+  it("stale uploads taint only without DEMO_UPLOADS; reuse, duplicates and non-fresh live shots always taint", () => {
+    const before = process.env.DEMO_UPLOADS;
+    try {
+      delete process.env.DEMO_UPLOADS;
+      expect(isTainted({ stale: true })).toBe(true);
+      expect(isTainted({ reusedOf: "0x1" })).toBe(true);
+      expect(isTainted({ stale: false })).toBe(false);
+      process.env.DEMO_UPLOADS = "1";
+      expect(isTainted({ stale: true, exifTime: null })).toBe(false);
+      expect(isTainted({ stale: true, reusedOf: "0x1" })).toBe(true);
+      expect(isTainted({ duplicateOf: "0x2" })).toBe(true);
+      expect(isTainted({ fresh: false })).toBe(true);
+    } finally {
+      if (before === undefined) delete process.env.DEMO_UPLOADS;
+      else process.env.DEMO_UPLOADS = before;
+    }
+  });
+});
+
 describe("checkEvidence", () => {
   it("flags a re-encoded copy of a stored photo as reused", async () => {
-    const original = await noisyJpeg();
+    const original = await noisyJpeg(7);
     await storePhoto(db, original, "living", "living-wide");
     const copy = await sharp(original).resize(300).jpeg({ quality: 60 }).toBuffer();
     const r = await checkEvidence(copy, { context: { type: "lease", id: "1", stage: "move-out" }, kind: "photo", captureMode: "live", capturedAt: now() },

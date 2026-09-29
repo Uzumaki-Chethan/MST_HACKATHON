@@ -6,7 +6,7 @@ import { BundleSchema, type Bundle, type BundleItem } from "@nestledger/shared/s
 import type { ChainClients } from "../chain/index.js";
 import type { Db } from "../db/index.js";
 import type { VisionLLM } from "./llm.js";
-import type { IntegrityResult } from "./integrity.js";
+import { demoUploads, type IntegrityResult } from "./integrity.js";
 
 export type AiDeps = { db: Db; llm: VisionLLM; chain: ChainClients };
 
@@ -54,7 +54,7 @@ export function integrityNote(label: string, checks: Partial<IntegrityResult> | 
     checks.reusedOf && "looks reused from earlier evidence",
     checks.nearDuplicateOf && "is a near-duplicate of earlier evidence",
     checks.fresh === false && "was not captured live within 5 minutes of upload",
-    checks.stale && "has missing or old EXIF time",
+    checks.stale && !demoUploads() && "has missing or old EXIF time",
     checks.geoOk === false && "was taken away from the property",
   ].filter(Boolean);
   return issues.length ? `Photo ${label} ${issues.join(", ")}. Lower your confidence for anything that relies on it.` : null;
