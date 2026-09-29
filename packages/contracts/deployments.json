@@ -8124,7 +8124,7 @@
   },
   "testnet": {
     "NestRegistry": {
-      "address": "0x53cdf6bfF53357f60c5eC9Dd4552f243837ec9f8",
+      "address": "0x5212a77a5b2bCAC1087442E6e2Bd6f8E20D066F8",
       "abi": [
         {
           "inputs": [
@@ -8734,7 +8734,7 @@
       ]
     },
     "NestPassport": {
-      "address": "0x7d8706C27ed1385E37a516Bd1094Fc0e4a3B8002",
+      "address": "0x2cf688D321e886861BD0B780e0878017EcA2B98A",
       "abi": [
         {
           "inputs": [
@@ -9510,11 +9510,11 @@
         }
       ],
       "constructorArguments": [
-        "0x53cdf6bfF53357f60c5eC9Dd4552f243837ec9f8"
+        "0x5212a77a5b2bCAC1087442E6e2Bd6f8E20D066F8"
       ]
     },
     "DisputeResolver": {
-      "address": "0x7868AcEb5f4d043476793086198870d90Bfe78d4",
+      "address": "0xfee1810E16AdC5A4348Ba018Cfc439f5fCCBabB1",
       "abi": [
         {
           "inputs": [
@@ -10410,14 +10410,14 @@
         }
       ],
       "constructorArguments": [
-        "0x53cdf6bfF53357f60c5eC9Dd4552f243837ec9f8",
-        "0x7d8706C27ed1385E37a516Bd1094Fc0e4a3B8002",
+        "0x5212a77a5b2bCAC1087442E6e2Bd6f8E20D066F8",
+        "0x2cf688D321e886861BD0B780e0878017EcA2B98A",
         "1000000000000000",
         300
       ]
     },
     "SocietyLedger": {
-      "address": "0xb19d9d63A50b14C35c3DFFF9e5b8C8E7C6923377",
+      "address": "0x8f33F06C739DeafbDb043854F693935Eb244c1C0",
       "abi": [
         {
           "inputs": [
@@ -12205,12 +12205,12 @@
         }
       ],
       "constructorArguments": [
-        "0x53cdf6bfF53357f60c5eC9Dd4552f243837ec9f8",
-        "0x7d8706C27ed1385E37a516Bd1094Fc0e4a3B8002"
+        "0x5212a77a5b2bCAC1087442E6e2Bd6f8E20D066F8",
+        "0x2cf688D321e886861BD0B780e0878017EcA2B98A"
       ]
     },
     "RentalEscrow": {
-      "address": "0xEF1ed68f299B47d78719b4a7a635E7e610753629",
+      "address": "0x9C545aB0b33d7707E8725974eB6285AE64855A9C",
       "abi": [
         {
           "inputs": [
@@ -14272,14 +14272,14 @@
         }
       ],
       "constructorArguments": [
-        "0x53cdf6bfF53357f60c5eC9Dd4552f243837ec9f8",
-        "0x7d8706C27ed1385E37a516Bd1094Fc0e4a3B8002",
-        "0x7868AcEb5f4d043476793086198870d90Bfe78d4",
-        "0xb19d9d63A50b14C35c3DFFF9e5b8C8E7C6923377"
+        "0x5212a77a5b2bCAC1087442E6e2Bd6f8E20D066F8",
+        "0x2cf688D321e886861BD0B780e0878017EcA2B98A",
+        "0xfee1810E16AdC5A4348Ba018Cfc439f5fCCBabB1",
+        "0x8f33F06C739DeafbDb043854F693935Eb244c1C0"
       ]
     },
     "MilestoneEscrow": {
-      "address": "0x20feF97Dae8b896f7ca08740Fb176D1b32a1846a",
+      "address": "0xb617d533479eeC236399C0874a42CCcce70b526F",
       "abi": [
         {
           "inputs": [
@@ -16235,14 +16235,14 @@
         }
       ],
       "constructorArguments": [
-        "0x53cdf6bfF53357f60c5eC9Dd4552f243837ec9f8",
-        "0x7d8706C27ed1385E37a516Bd1094Fc0e4a3B8002",
-        "0x7868AcEb5f4d043476793086198870d90Bfe78d4"
+        "0x5212a77a5b2bCAC1087442E6e2Bd6f8E20D066F8",
+        "0x2cf688D321e886861BD0B780e0878017EcA2B98A",
+        "0xfee1810E16AdC5A4348Ba018Cfc439f5fCCBabB1"
       ]
     },
     "_meta": {
-      "startBlock": 5789828,
-      "deployedAt": "2026-09-28T19:46:50.197Z"
+      "startBlock": 5796145,
+      "deployedAt": "2026-09-29T01:02:50.681Z"
     }
   }
 }
