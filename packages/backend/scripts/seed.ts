@@ -10,7 +10,7 @@ import sharp from "sharp";
 import { Contract, JsonRpcProvider, Wallet } from "ethers";
 import { SiweMessage } from "siwe";
 import {
-  addresses, formatAmount, hashJson, inrToWei, milestoneEscrowAbi, rentalEscrowAbi, societyLedgerAbi, WINDOWS,
+  addresses, formatAmount, hashJson, inrToWei, milestoneEscrowAbi, rentalEscrowAbi, societyLedgerAbi, WINDOWS, ZERO_HASH,
 } from "@nestledger/shared";
 import { config } from "../src/config.js";
 
@@ -229,6 +229,55 @@ async function seedHistory(societyId: bigint) {
   }
 }
 
+/** A tier-2 bill the residents voted down, so the public ledger shows a declined proposal (not only payouts).
+ *  Residents vote only above the tier-2 limit (₹50,000 by the vendor this month), so this is ₹55,000. */
+async function seedDeclined(societyId: bigint) {
+  log("\n[declined] ₹55,000 terrace waterproofing: committee approves, residents vote it down");
+  for (const id of (await readLedger.proposalsOf(societyId)) as bigint[]) {
+    if (Number((await readLedger.getProposal(id)).status) === 3) return log(`  = proposal ${id} was already rejected, skipping`);
+  }
+  const inr = 55_000;
+  // The treasury must hold the amount (it is reserved while the vote runs). If it doesn't, the owners pay a
+  // one-time ₹10,000 sinking-fund levy each, as societies do before a big repair.
+  if (BigInt(await readLedger.availableBalance(societyId)) < inrToWei(inr)) {
+    for (const [flatId, owner] of [[1n, "PRIYA"], [2n, "ROHAN"], [3n, "MEERA"], [4n, "C3"], [5n, "C4"], [6n, "C5"]] as const) {
+      await tx(`sinking-fund levy ₹10,000 flat ${flatId} (${owner})`, ledgerAt(cast[owner]).payMaintenance(flatId, { value: inrToWei(10_000) }));
+    }
+  }
+  const contractor = process.env.DEVICE_1_ADDRESS!; // a passive demo-cast address, used as the fictional contractor's payout address
+  const lines: [string, number][] = [["Terrace waterproofing membrane (1,800 sq ft)", 38_000], ["Labour", 17_000]];
+  const up = await upload(cast.MEERA, await invoiceImage("DWC-2026-0088", "2026-09-22", lines, "Deccan Waterproofing Co. (fictional)"), {
+    context: { type: "society", id: societyId.toString(), stage: "invoice" }, kind: "invoice", captureMode: "upload",
+  });
+  const docHash = await manifest(cast.MEERA, {
+    schema: "nestledger.invoice.v1", createdAt: now(), societyId: societyId.toString(), payee: contractor.toLowerCase(),
+    declaredAmountWei: inrToWei(inr).toString(), declaredAmountINR: inr, category: "civil", files: [up.hash],
+    note: "Invoice DWC-2026-0088 (fictional vendor)",
+  });
+  const id: bigint = await readLedger.nextProposalId();
+  await tx(`propose PayVendor ₹55,000 waterproofing → proposal ${id}`,
+    ledgerAt(cast.MEERA).propose(societyId, 0, contractor, inrToWei(inr), docHash, "civil", "0x"));
+  if (Number((await readLedger.getProposal(id)).tier) !== 2) throw new Error(`proposal ${id} is not tier 2; residents would not vote`);
+  // Approve only after the AI has attested: a flag resets approvals and then asks every approver for a written reason.
+  await waitFor("AI agent attests the invoice", async () => (await readLedger.getProposal(id)).attested, 90).catch(() => log("  (no attestation; continuing after the attest timeout)"));
+  for (const member of ["MEERA", "C3", "C4", "ROHAN"] as const) {
+    const p = await readLedger.getProposal(id);
+    if (Number(p.status) !== 0) break;
+    if (await readLedger.hasApproved(id, cast[member].address)) continue;
+    const reason = p.flagged
+      ? await manifest(cast[member], { schema: "nestledger.note.v1", createdAt: now(), purpose: "override", refs: [`proposal:${id}`],
+          text: `Committee member ${member} (scripted): the terrace leaks every monsoon; sending it to the residents to decide.` })
+      : ZERO_HASH;
+    await tx(`approve (${member}${p.flagged ? ", with override reason" : ""})`, ledgerAt(cast[member]).approve(id, reason));
+  }
+  // Tier 2: after the committee approves, the residents vote. Scripted owners (flat labels are public, names are not).
+  for (const [flatId, owner, support] of [[1n, "PRIYA", false], [2n, "ROHAN", false], [6n, "C5", false], [4n, "C3", true], [5n, "C4", true]] as const) {
+    await tx(`castVote flat ${flatId} (${owner}) ${support ? "for" : "against"}`, ledgerAt(cast[owner]).castVote(id, flatId, support));
+  }
+  await waitFor("vote closes; keeper marks it Rejected", async () => Number((await readLedger.getProposal(id)).status) === 3, 300);
+  log(`  proposal ${id} rejected by the residents (3 against, 2 for); the ₹55,000 reservation is released`);
+}
+
 const COMPACT = [
   ["living", "living-wide", "living"], ["kitchen", "kitchen-counter", "kitchen"], ["bedroom1", "bed1-wall", "bedroom"], ["bathroom1", "bath1-fittings", "bath"],
 ] as const;
@@ -398,6 +447,7 @@ async function main() {
 
   const { societyId, flats } = await seedSociety();
   if (!ONLY || ONLY === "history") await seedHistory(societyId);
+  if (!ONLY || ONLY === "declined") await seedDeclined(societyId);
   const leases = !ONLY || ONLY === "lease" ? await seedLeases(flats) : [];
   // BuildSafe is out of the demo (team decision); run --only=kitchen to seed the renovation project anyway.
   const projectId = ONLY === "kitchen" ? await seedKitchen() : undefined;
