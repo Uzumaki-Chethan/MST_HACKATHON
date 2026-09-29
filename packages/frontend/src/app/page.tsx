@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ModuleCard } from "@/components/ModuleCard";
 
 const MODULES = [
   {
@@ -7,6 +8,7 @@ const MODULES = [
     text: "The deposit sits in a contract, not the landlord's account. Deductions are itemised, AI-checked against move-in photos, and disputed item by item.",
     href: "/rent/new",
     cta: "Offer a lease",
+    offersLease: true,
     icon: "M3 11.5 12 4l9 7.5M5.5 10v10h13V10M10 20v-5h4v5",
   },
   {
@@ -33,14 +35,6 @@ const EXAMPLE = [
   { item: "Cracked kitchen tile", amount: "₹4,500", tone: "warn", note: "Disputed → arbiters" },
   { item: "Normal wear on the floor", amount: "₹0", tone: "muted", note: "Never deductible" },
 ] as const;
-
-function Icon({ d }: { d: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d={d} />
-    </svg>
-  );
-}
 
 export default function Home() {
   return (
@@ -113,19 +107,7 @@ export default function Home() {
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Wherever money changes hands at home</h2>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          {MODULES.map((m) => (
-            <Link key={m.name} href={m.href} className="card card-hover group flex flex-col gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-light text-accent-dark">
-                <Icon d={m.icon} />
-              </span>
-              <div>
-                <h3 className="font-semibold text-slate-900">{m.name}</h3>
-                <p className="text-xs font-medium text-slate-500">{m.who}</p>
-              </div>
-              <p className="flex-1 text-sm leading-relaxed text-slate-600">{m.text}</p>
-              <span className="text-sm font-medium text-accent group-hover:underline">{m.cta} →</span>
-            </Link>
-          ))}
+          {MODULES.map((m) => <ModuleCard key={m.name} m={m} />)}
         </div>
       </section>
 

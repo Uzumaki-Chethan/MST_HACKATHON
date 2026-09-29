@@ -12,6 +12,7 @@ import { Notice, RequireDeployed, RequireWallet } from "@/components/Gates";
 import { useNest } from "@/hooks/useNest";
 import { useTx } from "@/hooks/useTx";
 import { getMyFlats, postManifest } from "@/lib/api";
+import { LandlordRoleNote, useCanOfferLease } from "@/hooks/useCanOfferLease";
 import { describeError } from "@/lib/labels";
 
 const TIERS = ["Tier 0", "Tier 1", "Tier 2 (pays 75%)", "Tier 3 (pays 50%)"];
@@ -24,11 +25,18 @@ export default function NewLeasePage() {
       <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Offer a lease</h1>
       <RequireWallet signedIn>
         <RequireDeployed address={contracts.rental.address} name="RentalEscrow">
-          <OfferForm />
+          <OfferGate />
         </RequireDeployed>
       </RequireWallet>
     </div>
   );
+}
+
+function OfferGate() {
+  const canOffer = useCanOfferLease();
+  if (canOffer === undefined) return <p className="text-sm text-slate-500">Checking your profile…</p>;
+  if (!canOffer) return <Notice><LandlordRoleNote /></Notice>;
+  return <OfferForm />;
 }
 
 function OfferForm() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAccount, useBalance, useReadContract } from "wagmi";
@@ -9,7 +9,7 @@ import type { ProfileMeta } from "@nestledger/shared/schemas";
 import { Notice, RequireDeployed, RequireWallet } from "@/components/Gates";
 import { useNest } from "@/hooks/useNest";
 import { useTx } from "@/hooks/useTx";
-import { gasDrip, postManifest } from "@/lib/api";
+import { gasDrip, getManifest, postManifest } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { describeError } from "@/lib/labels";
 import { appChain } from "@/lib/wagmi";
@@ -28,7 +28,7 @@ const ROLE_TEXT: Record<KindName, string> = {
 export default function OnboardPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Create your NestLedger profile</h1>
+      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Your NestLedger profile</h1>
       <RequireWallet signedIn>
         <OnboardForm />
       </RequireWallet>
@@ -53,6 +53,22 @@ function OnboardForm() {
     query: { enabled: !!registry.address && !!address },
   });
   const balance = useBalance({ address, chainId: appChain.id });
+  const profile = useReadContract({
+    address: registry.address!, abi: registry.abi, functionName: "profileOf", args: [address!],
+    query: { enabled: !!registry.address && !!address && registered.data === true },
+  });
+  const current = profile.data as unknown as { kinds: number; metaHash: `0x${string}` } | undefined;
+  const [updated, setUpdated] = useState(false);
+
+  // An existing profile starts from its on-chain roles; `?add=LANDLORD` (from "Offer a lease" notes) ticks that role.
+  useEffect(() => {
+    if (!current) return;
+    const add = new URLSearchParams(window.location.search).get("add") as KindName | null;
+    const have = (Object.keys(Kind) as KindName[]).filter((k) => Number(current.kinds) & Kind[k]);
+    setRoles(add && add in Kind && !have.includes(add) ? [...have, add] : have);
+    // Keep the display name across updates (best effort: the old profile manifest may be unavailable).
+    getManifest<ProfileMeta>(current.metaHash).then((m) => m.displayName && setDisplayName(m.displayName)).catch(() => undefined);
+  }, [current]);
 
   const toggle = (k: KindName) => setRoles((r) => (r.includes(k) ? r.filter((x) => x !== k) : [...r, k]));
 
@@ -68,6 +84,11 @@ function OnboardForm() {
         ...(displayName.trim() ? { displayName: displayName.trim() } : {}),
       };
       const { hash: metaHash } = await postManifest(profile);
+      if (registered.data) {
+        await send({ address: registry.address, abi: registry.abi, functionName: "updateProfile", args: [kinds, metaHash] }, "Update roles");
+        setUpdated(true);
+        return;
+      }
       await send({ address: registry.address, abi: registry.abi, functionName: "register", args: [kinds, metaHash] }, "Create profile");
       try {
         await gasDrip();
@@ -83,12 +104,17 @@ function OnboardForm() {
 
   return (
     <RequireDeployed address={registry.address} name="NestRegistry">
-      {registered.data ? (
-        <Notice>
-          This wallet already has a profile and a NestPassport. <Link className="text-accent underline" href="/dashboard">Go to your dashboard</Link>.
-        </Notice>
+      {registered.data && !current ? (
+        <p className="text-sm text-slate-500">Loading your profile…</p>
       ) : (
         <div className="card space-y-4">
+          {registered.data && (
+            <p className="text-sm text-slate-600">
+              This wallet already has a profile and a NestPassport. You can change your roles here (one transaction); your passport history
+              stays. <Link className="text-accent underline" href="/dashboard">Back to your dashboard</Link>.
+            </p>
+          )}
+          {updated && <Notice>Roles updated. <Link className="text-accent underline" href="/dashboard">Go to your dashboard</Link>.</Notice>}
           <fieldset className="space-y-2">
             <legend className="mb-1 text-sm font-medium text-slate-700">What will you use NestLedger for? (pick any)</legend>
             {(Object.keys(Kind) as KindName[]).filter((k) => k !== "SUPPLIER").map((k) => (
@@ -103,7 +129,7 @@ function OnboardForm() {
             <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" maxLength={64} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
           </label>
           <p className="text-xs text-slate-500">
-            Roles are for display only. Your profile mints a soulbound NestPassport that records your reputation. Only a hash of
+            Roles tailor what the app offers you (for example, &quot;Offer a lease&quot; needs Landlord); on-chain, roles are per agreement. Your profile mints a soulbound NestPassport that records your reputation. Only a hash of
             the profile goes on-chain.
           </p>
           {balance.data && balance.data.value === BigInt(0) && (
@@ -115,7 +141,7 @@ function OnboardForm() {
           {error && <p className="text-sm text-red-700">{error}</p>}
           {dripNote && <p className="text-sm text-accent">{dripNote}</p>}
           <button className="btn-primary w-full" disabled={pending || roles.length === 0} onClick={submit}>
-            {pending ? "Waiting for BridgeKey…" : "Create profile and passport"}
+            {pending ? "Waiting for BridgeKey…" : registered.data ? "Update my roles" : "Create profile and passport"}
           </button>
         </div>
       )}
