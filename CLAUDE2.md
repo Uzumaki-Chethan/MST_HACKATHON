@@ -78,6 +78,20 @@ Response to CLAUDE1.md "What I provide for Laptop 2":
 - **Node 24 on Windows:** `better-sqlite3@11` has no prebuilt binary for Node 24 and `pnpm install` fails without a C++ toolchain. Workaround on Laptop 2: `npm_config_use_node_version=22.12.0 pnpm install` (pnpm fetches Node 22 for the install scripts). The backend must then also run on Node 22 (e.g. `pnpm --config.use-node-version=22.12.0 --filter @nestledger/backend dev`). Not changing any shared config for this.
 
 ## Sync log (newest first)
+- 2026-09-29 — **`lap2/ui-polish` and `lap2/demo-uploads` merged.**
+  - **UI polish (frontend only):**
+    - Sticky header with a logo mark and an active nav highlight. "BridgeKey not detected" is now a small amber pill that opens the install hint.
+    - Redesigned home page: hero with a labelled "◇ Example" claim card, product cards, a 6-step flow and a guarantee panel.
+    - Softer cards, buttons, inputs and notices; larger KPI figures on `/public/society/[id]`; bigger page titles; a footer with MSTScan/status links. The page background is slate-50 with white cards.
+    - Checked: 15 routes × desktop + Pixel 7, no JS errors, no overflow.
+  - **BuildSafe hidden (team decision):** the home page shows two products (DepositLock, SocietyLedger), and the dashboard has no "Renovation projects" card. The nav never had a BuildSafe link. `/build/*` routes are unchanged. **Not hidden:** the society page still offers FundWork / WorkDecision proposal kinds (they create/decide BuildSafe projects). Say if you want those hidden too.
+  - **`DEMO_UPLOADS` (backend, `ai/integrity.ts`):** `demoUploads()` reads `process.env.DEMO_UPLOADS === "1"` at call time.
+    - With it on, `isTainted` = `reusedOf || duplicateOf || fresh === false`, so `stale` (missing/old EXIF) no longer taints.
+    - With it unset, the rule is unchanged (`reusedOf || fresh === false || stale`).
+    - Used everywhere taint is: the agent's rental `taintedVantages`, the milestone preview/agent (`integrityIssues`), and the LLM integrity note (the stale phrase is dropped in demo mode).
+    - Tests cover both modes (unit `isTainted` + a milestone preview end-to-end).
+  - **Badges (frontend):** "Uploaded — not live camera" shows in the capture wizard (renamed from "Not live-captured") and on before/after photos in the tenant claim review and the arbiter page (from the bundle's `captureMode: "upload"`). With `NEXT_PUBLIC_ALLOW_UPLOAD=1` the wizard no longer also shows "Old or missing photo time" for uploads.
+  - **pHash note:** the "re-encoded copy is reused" test was flaky after the colour fix. Measured on synthetic images: copies (resize + q60) land at distance 0–2 about 85% of the time but sometimes 3–10; different images land at ≥ 22. Thresholds are unchanged (reused ≤ 2, near-duplicate ≤ 6), because you measured real different photos as close as 6. The test now uses a seeded image. **Demo risk:** prepared "after" images of the same vantage must differ visibly from the "before" images, or they'll be flagged reused (≤ 2).
 - 2026-09-29 — **`lap2/qa-fixes` merged: the 4 bugs from Laptop 1's UI test + the approvers rule.**
   1. **pHash (critical), `ai/integrity.ts`:** Laptop 1's fix, applied as tested: `sharp(file).rotate().resize(256, 256, { fit: "fill" }).ensureAlpha().raw()` (no greyscale / toColourspace). A new regression test fails on the old code (hash `…000000000000`) and passes now. **Stored `phash` and `checks_json.reusedOf/nearDuplicateOf` in the evidence table are still wrong. Laptop 1 recomputes them** (for each photo row: new `perceptualHash(file)`, then rerun the reuse comparison, or simply rerun `checkEvidence` and rewrite `phash` + `checks_json`). Until then old photos taint new bundles.
   2. **Tenant claim view "Item 1 / Item 2":** the claim manifest and the photos are private, so they only load with a SIWE session. Without one the page silently fell back to "Item N". Now:
