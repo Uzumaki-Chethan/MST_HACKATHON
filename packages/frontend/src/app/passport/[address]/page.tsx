@@ -64,7 +64,7 @@ function Passport({ address }: { address: `0x${string}` }) {
     <div className="space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-6">
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-slate-900">NestPassport</h1>
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">NestPassport</h1>
           <p className="flex flex-wrap items-center gap-2 text-sm">
             <AddressLink address={address} />
             <button className="text-xs text-accent underline" onClick={() => { navigator.clipboard?.writeText(address); setCopied(true); }}>

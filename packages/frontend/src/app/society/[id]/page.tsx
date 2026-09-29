@@ -41,7 +41,7 @@ function SocietyDetail({ id }: { id: string }) {
     <div className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{d.society.name}</h1>
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">{d.society.name}</h1>
           <p className="text-sm text-slate-600">
             Society #{id}{sameAddr(d.society.admin, address) && " · you are the admin"}{isCommittee && " · you are on the committee"}
           </p>

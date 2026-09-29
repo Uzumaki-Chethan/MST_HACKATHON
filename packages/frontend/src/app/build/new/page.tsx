@@ -34,7 +34,7 @@ export default function NewProjectPage() {
   const { contracts } = useNest();
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Start a renovation project</h1>
+      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Start a renovation project</h1>
       <p className="text-sm text-slate-600">
         You fund the whole budget into the MilestoneEscrow contract now. Each milestone pays a materials advance when it opens, and the rest
         only after you approve the work (or stay silent while the AI check is strong enough).

@@ -28,7 +28,7 @@ const ROLE_TEXT: Record<KindName, string> = {
 export default function OnboardPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Create your NestLedger profile</h1>
+      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Create your NestLedger profile</h1>
       <RequireWallet signedIn>
         <OnboardForm />
       </RequireWallet>

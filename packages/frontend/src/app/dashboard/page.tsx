@@ -15,7 +15,7 @@ const TIERS = ["Tier 0 (unverified)", "Tier 1 (verified)", "Tier 2 (25% smaller 
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Your dashboard</h1>
+      <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Your dashboard</h1>
       <RequireWallet>
         <Dashboard />
       </RequireWallet>
@@ -38,7 +38,6 @@ function Dashboard() {
     query: { enabled: !!contracts.registry.address && !!address },
   });
   const leases = useIds(contracts.rental, "agreementsOf", address);
-  const projects = useIds(contracts.milestone, "agreementsOf", address);
   const societies = useIds(contracts.ledger, "societiesOf", address);
   const disputes = useIds(contracts.resolver, "disputesOf", address);
 
@@ -71,7 +70,7 @@ function Dashboard() {
 
       <PassportCard address={address!} />
 
-      <IdList title="Renovation projects" ids={projects.data} deployed={!!contracts.milestone.address} href={(id) => `/build/${id}`} action={{ href: "/build/new", label: "Start a project" }} />
+      {/* BuildSafe is out of the demo (team decision 29 Sep); /build routes stay reachable by URL. */}
       <IdList title="Societies" ids={societies.data} deployed={!!contracts.ledger.address} href={(id) => `/society/${id}`} action={{ href: "/society/new", label: "Create a society" }} />
       <IdList title="Disputes you arbitrate" ids={disputes.data} deployed={!!contracts.resolver.address} href={(id) => `/arbiter/${id}`} />
     </div>
