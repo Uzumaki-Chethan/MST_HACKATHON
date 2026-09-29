@@ -57,6 +57,17 @@ The society has ₹23,950 available, which is enough for 4 runs of the ₹4,800 
 | 5:45 | **Public again** | Projector: reload `/public/society/1`. The new payout shows the **AI flag, its justification and all three written override reasons**. |
 | 6:00 | **Close** | "One primitive: claim, AI attests, accept or dispute per item, silence rules, arbiters. Money never sits with an interested party, and the AI never moves money alone. Next: INR stablecoin and UPI on-ramp." Show the tenant's passport QR. |
 
+## Optional beat: residents vote on a big bill (about 3 min)
+
+Bills above ₹50,000 need the residents, not just the committee. The treasury has ₹68,950 available.
+
+1. MEERA, `/society/1`, Proposals, **Pay a vendor**: any vendor address, ₹55,000, category civil (or other), upload an invoice image, run the AI check, then **Propose paying** and sign.
+2. Committee approves: MEERA approves in the app (with a reason if flagged), then run the **scripted** C3/C4 `committee-approve` command. The proposal now shows **resident vote open** with a 120 s countdown and a tally bar.
+3. Residents vote. MEERA (C-202), ROHAN (B-304) and PRIYA (A-101) click **For** / **Against** in the app. Flats D-101 to D-103 vote with the **scripted** command below.
+4. After 120 s the keeper settles it. **Majority for, and quorum met: paid. Otherwise: Rejected**, and the money goes back to the available balance. It then appears on the public page.
+
+An example already exists: proposal 5, a ₹55,000 terrace-waterproofing bill the residents voted down 3–2.
+
 ## Scripted actors (Laptop 1 terminal, repo root)
 
 Both scripts find the right dispute or proposal on their own; the ids are optional.
