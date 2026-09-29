@@ -40,11 +40,11 @@ Write-Host "  frontend $web"
 
 # Backend: accepts sign-in and CORS from the public frontend URL and from localhost.
 Start-Process powershell -ArgumentList "-NoExit", "-Command",
-  "`$env:PUBLIC_WEB_ORIGIN='$web,http://localhost:3000'; Set-Location '$root\packages\backend'; pnpm start"
+  "`$env:PUBLIC_WEB_ORIGIN='$web,http://localhost:3000'; `$env:DEMO_UPLOADS='1'; Set-Location '$root\packages\backend'; pnpm start"
 
 # Frontend: production build that calls the public backend URL.
 Start-Process powershell -ArgumentList "-NoExit", "-Command",
-  "`$env:NEXT_PUBLIC_API_URL='$api'; Set-Location '$root\packages\frontend'; pnpm build; if (`$?) { pnpm exec next start -p 3000 }"
+  "`$env:NEXT_PUBLIC_API_URL='$api'; `$env:NEXT_PUBLIC_ALLOW_UPLOAD='1'; Set-Location '$root\packages\frontend'; pnpm build; if (`$?) { pnpm exec next start -p 3000 }"
 
 $info = @"
 NestLedger is starting (the frontend build takes about a minute).

@@ -3,6 +3,9 @@
 //   pnpm --filter @nestledger/backend exec tsx scripts/seed.ts [--only=society|history|lease|kitchen]
 // The demo cast is fictional; its wallets are real testnet wallets from the repo-root .env.local.
 // Never writes reputation directly: every passport stat comes from these real flows.
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 import { Contract, JsonRpcProvider, Wallet } from "ethers";
 import { SiweMessage } from "siwe";
@@ -80,12 +83,18 @@ async function login(w: Wallet): Promise<string> {
 }
 
 async function api(w: Wallet, path: string, body: unknown) {
-  const res = await fetch(`${API}${path}`, {
-    method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${await login(w)}` },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`${path} failed (${res.status}): ${await res.text()}`);
-  return res.json();
+  // AI routes call a real model when LLM_PROVIDER is set; retry its transient "high demand" errors.
+  for (let attempt = 1; ; attempt++) {
+    const res = await fetch(`${API}${path}`, {
+      method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${await login(w)}` },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) return res.json();
+    const text = await res.text();
+    if (res.status < 500 || attempt === 5) throw new Error(`${path} failed (${res.status}): ${text}`);
+    log(`  … ${path} returned ${res.status}, retrying in ${attempt * 10} s`);
+    await sleep(attempt * 10_000);
+  }
 }
 
 async function manifest(w: Wallet, obj: Record<string, unknown>): Promise<`0x${string}`> {
@@ -221,8 +230,10 @@ async function seedHistory(societyId: bigint) {
 }
 
 const COMPACT = [
-  ["living", "living-wide"], ["kitchen", "kitchen-counter"], ["bedroom1", "bed1-wall"], ["bathroom1", "bath1-fittings"],
+  ["living", "living-wide", "living"], ["kitchen", "kitchen-counter", "kitchen"], ["bedroom1", "bed1-wall", "bedroom"], ["bathroom1", "bath1-fittings", "bath"],
 ] as const;
+// Prepared move-in images (AI-generated, visibly labelled). The live demo uploads the matching demo-photos/after-*.jpg.
+const DEMO_PHOTOS = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "demo-photos");
 
 /** Step 6: Lease #1 (ROHAN → ASHA, flat B-304) pre-staged up to "move-out". */
 async function seedLease(flats: Record<string, bigint>) {
@@ -232,7 +243,8 @@ async function seedLease(flats: Record<string, bigint>) {
   let leaseId: bigint = await readRental.nextId();
   for (const id of (await readRental.agreementsOf(cast.ASHA.address)) as bigint[]) {
     const L = await readRental.getLease(id);
-    if (Number(L.status) === 0 && L.landlord === cast.ROHAN.address) leaseId = id;
+    // Offered, or signed but without a move-in baseline yet (a run that stopped part-way).
+    if ((Number(L.status) === 0 || (Number(L.status) === 1 && Number(L.baseline) === 0)) && L.landlord === cast.ROHAN.address) leaseId = id;
   }
   const resuming = leaseId < (await readRental.nextId());
   const termsHash = await manifest(cast.ROHAN, {
@@ -246,23 +258,24 @@ async function seedLease(flats: Record<string, bigint>) {
     period: W.period, periods: W.periods, grace: W.grace, baselineWindow: W.baselineWindow, claimWindow: W.claimWindow,
     responseWindow: W.responseWindowLease, termsHash,
   }));
-  await tx(`signLease (deposit ${formatAmount(deposit)})`, rentalAt(cast.ASHA).signLease(leaseId, { value: deposit }));
+  if (Number((await readRental.getLease(leaseId)).status) === 0) {
+    await tx(`signLease (deposit ${formatAmount(deposit)})`, rentalAt(cast.ASHA).signLease(leaseId, { value: deposit }));
+  }
   // Pay both periods now: period 0 is due at signing (+30 s grace) and paying early counts as on time.
   // Paying after the baseline wait would record a permanent late payment and block ASHA from Tier 3.
+  // Explicit gas: a load-balanced RPC can estimate against the state before the previous payment and run out of gas.
   const due = rent + MAINTENANCE;
-  for (let k = 0; k < W.periods; k++) {
-    await tx(`payRent period ${k} (rent → ROHAN, maintenance → society)`, rentalAt(cast.ASHA).payRent(leaseId, { value: due }));
+  for (let k = Number((await readRental.getLease(leaseId)).paidPeriods); k < W.periods; k++) {
+    await tx(`payRent period ${k} (rent → ROHAN, maintenance → society)`, rentalAt(cast.ASHA).payRent(leaseId, { value: due, gasLimit: 400_000 }));
   }
 
-  // Move-in baseline: 4 live-captured demo photos → bundle → AI move-in report → submitBaseline.
+  // Move-in baseline: the 4 prepared demo images, uploaded (labelled "not live camera") → bundle → AI move-in report → submitBaseline.
   const items = [];
-  for (const [i, [room, vantageId]] of COMPACT.entries()) {
-    const capturedAt = now();
-    const up = await upload(cast.ASHA, await demoPhoto(`B-304 move-in · ${vantageId}`, 1000 + i * 77), {
-      context: { type: "lease", id: leaseId.toString(), stage: "move-in" }, kind: "photo", room, vantageId,
-      captureMode: "live", capturedAt, geo: { ...BENGALURU, acc: 15 },
+  for (const [room, vantageId, file] of COMPACT) {
+    const up = await upload(cast.ASHA, fs.readFileSync(path.join(DEMO_PHOTOS, `before-${file}.jpg`)), {
+      context: { type: "lease", id: leaseId.toString(), stage: "move-in" }, kind: "photo", room, vantageId, captureMode: "upload",
     });
-    items.push(bundleItem(up, { kind: "photo", room, vantageId, captureMode: "live", capturedAt, geo: { ...BENGALURU, acc: 15 } }));
+    items.push(bundleItem(up, { kind: "photo", room, vantageId, captureMode: "upload" }));
   }
   const bundleHash = await manifest(cast.ASHA, {
     schema: "nestledger.bundle.v1", context: { type: "lease", id: leaseId.toString(), stage: "move-in" },
@@ -362,7 +375,8 @@ async function main() {
   const { societyId, flats } = await seedSociety();
   if (!ONLY || ONLY === "history") await seedHistory(societyId);
   const leaseId = !ONLY || ONLY === "lease" ? await seedLease(flats) : undefined;
-  const projectId = !ONLY || ONLY === "kitchen" ? await seedKitchen() : undefined;
+  // BuildSafe is out of the demo (team decision); run --only=kitchen to seed the renovation project anyway.
+  const projectId = ONLY === "kitchen" ? await seedKitchen() : undefined;
 
   log("\nSeed complete.");
   log(`  public dashboard   ${config.publicWebOrigin}/public/society/${societyId}`);
