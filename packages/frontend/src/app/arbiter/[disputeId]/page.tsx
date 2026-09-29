@@ -157,7 +157,7 @@ function DisputeDetail({ id }: { id: string }) {
                   </div>
                 )}
               </div>
-              {f && <BeforeAfter before={photos.before.get(f.vantageId)} after={photos.after.get(f.vantageId)} label={f.description} />}
+              {f && <BeforeAfter before={photos.before.get(f.vantageId)} after={photos.after.get(f.vantageId)} label={f.description} uploaded={photos.uploaded} />}
             </div>
           );
         })}

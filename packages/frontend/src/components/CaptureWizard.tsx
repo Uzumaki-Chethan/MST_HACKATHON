@@ -28,12 +28,14 @@ const ALLOW_UPLOAD = process.env.NEXT_PUBLIC_ALLOW_UPLOAD === "1";
 
 export function checkBadges(checks: EvidenceChecks | null | undefined, captureMode?: "live" | "upload"): string[] {
   const out: string[] = [];
-  if (captureMode === "upload") out.push("Not live-captured");
+  if (captureMode === "upload") out.push("Uploaded — not live camera");
   if (!checks) return out;
   if (checks.reusedOf) out.push("Looks reused");
   if (checks.nearDuplicateOf) out.push("Near-duplicate");
   if (checks.fresh === false) out.push("Not fresh");
-  if (checks.stale) out.push("Old or missing photo time");
+  // With uploads enabled for the demo (prepared, labelled images), the upload badge already says where the photo
+  // came from; the backend's DEMO_UPLOADS switch stops a missing EXIF time from zeroing its AI support.
+  if (checks.stale && !ALLOW_UPLOAD) out.push("Old or missing photo time");
   if (checks.geoOk === false) out.push("Taken away from the property");
   return out;
 }
@@ -144,7 +146,7 @@ export function CaptureWizard({
         <LiveCapture key={v.vantageId} ghostUrl={ghosts[v.vantageId]} busy={busy} onCapture={({ blob, capturedAt }) => upload(blob, capturedAt, "live")} />
         {ALLOW_UPLOAD && (
           <label className="block text-xs text-slate-600">
-            Or upload a file (marked &quot;not live-captured&quot;):{" "}
+            Or upload a file (marked &quot;Uploaded — not live camera&quot;):{" "}
             <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0], new Date().toISOString(), "upload")} />
           </label>
         )}
