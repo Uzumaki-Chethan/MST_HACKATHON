@@ -78,6 +78,9 @@ pnpm --filter @nestledger/contracts exec hardhat run scripts/actors/arbiter-vote
 
 # C3 and C4 approve the newest pending proposal, each with a written override reason (waits for the AI first)
 pnpm --filter @nestledger/contracts exec hardhat run scripts/actors/committee-approve.ts --network testnet
+
+# Flats D-101..D-103 (C3, C4, C5) vote on the open resident vote: "for" or "against"
+$env:VOTE="against"; pnpm --filter @nestledger/contracts exec hardhat run scripts/actors/resident-vote.ts --network testnet
 ```
 
 ## If something goes wrong
