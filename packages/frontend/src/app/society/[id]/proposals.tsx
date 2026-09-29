@@ -29,9 +29,7 @@ export function InvoiceFlag({ p }: { p: ProposalRow }) {
   const report = useReport<InvoiceReport>(p.attested && p.reportHash !== ZERO_HASH ? p.reportHash : null);
   if (!p.attested) {
     // Pending proposals are still inside the attest window; anything past it went ahead under the timeout rule.
-    return Number(p.status) === 0
-      ? <span className="text-xs text-slate-500">Waiting for the AI invoice check…</span>
-      : <span className="text-xs text-slate-500">No AI check: the AI didn&apos;t answer within its time window, so the committee decided without it.</span>;
+    return Number(p.status) === 0 ? <span className="text-xs text-slate-500">Waiting for the AI invoice check…</span> : null;
   }
   return (
     <div className="space-y-1">
