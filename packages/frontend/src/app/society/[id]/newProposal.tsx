@@ -23,17 +23,22 @@ const createProjectInputs = (milestoneEscrowAbi as readonly { type: string; name
 
 type Kind = 0 | 1 | 2;
 
+/** BuildSafe is out of the demo (team decision 29 Sep), so the works proposal kinds are hidden; flip to show them. */
+const SHOW_WORKS = false;
+
 export function NewProposal({ id, data }: { id: string; data: SocietyData }) {
   const [kind, setKind] = useState<Kind>(0);
   const [preset, setPreset] = useState<WindowPreset>("demo");
   return (
     <div className="card space-y-4">
-      <h3 className="font-semibold text-slate-900">New proposal (committee)</h3>
-      <div className="flex flex-wrap gap-2">
-        {(["Pay a vendor", "Fund a works project", "Decide on a works milestone"] as const).map((t, k) => (
-          <button key={t} className={k === kind ? "btn-primary" : "btn-secondary"} onClick={() => setKind(k as Kind)}>{t}</button>
-        ))}
-      </div>
+      <h3 className="font-semibold text-slate-900">{SHOW_WORKS ? "New proposal (committee)" : "Pay a vendor (committee proposal)"}</h3>
+      {SHOW_WORKS && (
+        <div className="flex flex-wrap gap-2">
+          {(["Pay a vendor", "Fund a works project", "Decide on a works milestone"] as const).map((t, k) => (
+            <button key={t} className={k === kind ? "btn-primary" : "btn-secondary"} onClick={() => setKind(k as Kind)}>{t}</button>
+          ))}
+        </div>
+      )}
       <p className="text-xs text-slate-500">
         Available to spend: <Amount wei={data.available} inline />. The amount is reserved as soon as you propose, so parallel proposals can&apos;t overspend.
       </p>
