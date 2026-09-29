@@ -2,7 +2,7 @@
 
 **The trust layer for home living.** Rent deposits, society maintenance funds and home renovation budgets sit in smart contracts on MST Blockchain, not in the landlord's, committee's or contractor's account. An AI attestor agent checks the photos and invoices, and humans decide every contested rupee.
 
-![MST Testnet](https://img.shields.io/badge/MST%20Testnet-chain%2091562037-0F766E) ![BridgeKey](https://img.shields.io/badge/wallet-BridgeKey-0F766E) ![Contracts verified](https://img.shields.io/badge/MSTScan-6%20contracts%20verified-0F766E) ![Tests](https://img.shields.io/badge/tests-61%20contract%20%2B%2046%20backend-0F766E)
+![MST Testnet](https://img.shields.io/badge/MST%20Testnet-chain%2091562037-0F766E) ![BridgeKey](https://img.shields.io/badge/wallet-BridgeKey-0F766E) ![Contracts verified](https://img.shields.io/badge/MSTScan-6%20contracts%20verified-0F766E) ![Tests](https://img.shields.io/badge/tests-61%20contract%20%2B%2051%20backend-0F766E)
 
 Built at the MST Blockchain × Newrro Buildathon (28–29 Sep 2026). The full spec is in [docs/SPEC.md](docs/SPEC.md), and every deviation from it is listed in [docs/SPEC-CHANGES.md](docs/SPEC-CHANGES.md).
 
@@ -42,7 +42,7 @@ The pattern is the same each time: one interested party holds the money, there's
 | Product | Payer (can object) | Payee (claims) | What gets claimed |
 |---|---|---|---|
 | **DepositLock** (rent) | Tenant | Landlord | Unpaid rent + damage deductions from the deposit |
-| **BuildSafe** (renovation) | Homeowner or society treasury | Contractor | A milestone's line items, each with a materials advance |
+| **BuildSafe** (renovation; built and tested, not in the live demo) | Homeowner or society treasury | Contractor | A milestone's line items, each with a materials advance |
 | **SocietyLedger** (society funds) | Society treasury, via committee and resident votes | Vendor | An invoice, AI-extracted and anomaly-checked, with approvals that scale with risk |
 
 ---
@@ -77,7 +77,7 @@ flowchart LR
   FE <-->|REST| BE["Backend (Fastify + SQLite): API, evidence store, SIWE, indexer, keeper, AI attestor agent"]
   C -->|events| BE
   BE -->|attest / finalise txs| C
-  BE --> LLM["Vision LLM (Claude or Gemini; fixtures in the demo)"]
+  BE --> LLM["Vision LLM (Gemini live; Claude also supported)"]
 ```
 
 Humans sign every money action with BridgeKey. The backend has two server wallets:
@@ -123,7 +123,7 @@ stateDiagram-v2
 |---|---|
 | `packages/contracts` | Hardhat project: 6 contracts + the `AttestedEscrow` core, 61 tests, deploy / verify / actor scripts |
 | `packages/shared` | `@nestledger/shared`: chain config, ABIs + addresses, money helpers, hashing, enums, time windows, zod schemas |
-| `packages/backend` | Fastify API, SQLite, evidence store, SIWE, indexer, keeper, AI tasks + agent, seed script (46 tests) |
+| `packages/backend` | Fastify API, SQLite, evidence store, SIWE, indexer, keeper, AI tasks + agent, seed script (51 tests) |
 | `packages/frontend` | Next.js app (App Router), wagmi + viem, BridgeKey connect, every page in SPEC §8.3 |
 | `docs/` | Spec, spec changes, work split, hosting, demo cast, demo script |
 
@@ -146,16 +146,16 @@ The same config is in [`packages/shared/src/chain.ts`](packages/shared/src/chain
 
 ### Contracts (testnet v2, all verified on MSTScan)
 
-Deployed from block `5789828` by `0x6410E1fE8066A5d28af8c4A23edB4Bb788519214` (ADMIN).
+Deployed from block `5796145` by `0x6410E1fE8066A5d28af8c4A23edB4Bb788519214` (ADMIN).
 
 | Contract | Role | Address |
 |---|---|---|
-| **RentalEscrow** | DepositLock: leases, rent split, baseline, move-out, deposit claims | [`0xEF1ed68f299B47d78719b4a7a635E7e610753629`](https://testnet.mstscan.com/address/0xEF1ed68f299B47d78719b4a7a635E7e610753629) |
-| **MilestoneEscrow** | BuildSafe: milestones, advances, rework rounds, change orders, stall rule | [`0x20feF97Dae8b896f7ca08740Fb176D1b32a1846a`](https://testnet.mstscan.com/address/0x20feF97Dae8b896f7ca08740Fb176D1b32a1846a) |
-| **SocietyLedger** | Society treasury: maintenance, tiered proposals, resident votes, AI invoice checks | [`0xb19d9d63A50b14C35c3DFFF9e5b8C8E7C6923377`](https://testnet.mstscan.com/address/0xb19d9d63A50b14C35c3DFFF9e5b8C8E7C6923377) |
-| **DisputeResolver** | 3-arbiter panels, per-item votes, dispute bond | [`0x7868AcEb5f4d043476793086198870d90Bfe78d4`](https://testnet.mstscan.com/address/0x7868AcEb5f4d043476793086198870d90Bfe78d4) |
-| **NestPassport** | Soulbound reputation: 22 stats, tenant tiers, trust-priced deposits | [`0x7d8706C27ed1385E37a516Bd1094Fc0e4a3B8002`](https://testnet.mstscan.com/address/0x7d8706C27ed1385E37a516Bd1094Fc0e4a3B8002) |
-| **NestRegistry** | Users, roles, verification, module and attestor roles | [`0x53cdf6bfF53357f60c5eC9Dd4552f243837ec9f8`](https://testnet.mstscan.com/address/0x53cdf6bfF53357f60c5eC9Dd4552f243837ec9f8) |
+| **RentalEscrow** | DepositLock: leases, rent split, baseline, move-out, deposit claims | [`0x9C545aB0b33d7707E8725974eB6285AE64855A9C`](https://testnet.mstscan.com/address/0x9C545aB0b33d7707E8725974eB6285AE64855A9C) |
+| **MilestoneEscrow** | BuildSafe (deployed and tested; not in the live demo): milestones, advances, rework rounds, change orders, stall rule | [`0xb617d533479eeC236399C0874a42CCcce70b526F`](https://testnet.mstscan.com/address/0xb617d533479eeC236399C0874a42CCcce70b526F) |
+| **SocietyLedger** | Society treasury: maintenance, tiered proposals, resident votes, AI invoice checks | [`0x8f33F06C739DeafbDb043854F693935Eb244c1C0`](https://testnet.mstscan.com/address/0x8f33F06C739DeafbDb043854F693935Eb244c1C0) |
+| **DisputeResolver** | 3-arbiter panels, per-item votes, dispute bond | [`0xfee1810E16AdC5A4348Ba018Cfc439f5fCCBabB1`](https://testnet.mstscan.com/address/0xfee1810E16AdC5A4348Ba018Cfc439f5fCCBabB1) |
+| **NestPassport** | Soulbound reputation: 22 stats, tenant tiers, trust-priced deposits | [`0x2cf688D321e886861BD0B780e0878017EcA2B98A`](https://testnet.mstscan.com/address/0x2cf688D321e886861BD0B780e0878017EcA2B98A) |
+| **NestRegistry** | Users, roles, verification, module and attestor roles | [`0x5212a77a5b2bCAC1087442E6e2Bd6f8E20D066F8`](https://testnet.mstscan.com/address/0x5212a77a5b2bCAC1087442E6e2Bd6f8E20D066F8) |
 
 The same addresses are exported from [`packages/shared/src/addresses.ts`](packages/shared/src/addresses.ts), and the ABIs from [`packages/shared/src/abis/`](packages/shared/src/abis/).
 
@@ -166,35 +166,35 @@ The spec also planned **TankerTrust** (IoT water deliveries). The team dropped i
 
 ### Transactions by type
 
-All real, all on MST Testnet v2, from the seed run (`packages/backend/scripts/seed.ts`) and the backend's own server wallets. The *Signed by* column shows who sent each one:
+All real, all on MST Testnet, on the final deployment. The *Signed by* column shows who sent each one:
 
-- **Scripted:** demo-cast keys used by the seed script.
+- **Scripted:** demo-cast keys used by the seed script (`packages/backend/scripts/seed.ts`).
+- **BridgeKey:** a person clicking in the app during the team's dry run.
 - **AGENT / KEEPER:** the backend's two server wallets.
 
 | # | Type (function) | Contract | Signed by | Transaction |
 |---|---|---|---|---|
-| 1 | `register` (mints the soulbound passport) | NestRegistry | MEERA (scripted) | [`0xa4d8…f954`](https://testnet.mstscan.com/tx/0xa4d8475aba928d26ea44ea97c89a08f33d1f61cdacf40326596e0427ffc5f954) |
-| 2 | `verify` | NestRegistry | ADMIN | [`0x7210…ca0`](https://testnet.mstscan.com/tx/0x72107db2829ec866e63e30255afbfcd1ed65d52dee376891e149d09fa2d1fca0) |
-| 3 | `addArbiter` | DisputeResolver | ADMIN | [`0x17a1…f120`](https://testnet.mstscan.com/tx/0x17a13f8e3a09ee9f91d9d8dcb71d875315b95e06478e2980119566c3270df120) |
-| 4 | `setTierParams` | NestPassport | ADMIN | [`0xe508…e173`](https://testnet.mstscan.com/tx/0xe5084b4942aa8c150d499ef3cd046a53abc49ebae8595d7a7cf3c6a27c38e173) |
-| 5 | `createSociety` (Green Meadows Residency) | SocietyLedger | MEERA (scripted) | [`0x9354…18c7`](https://testnet.mstscan.com/tx/0x93545e5227e14e1d68bf623de1b36f574a87704431e872b23ed61377a76d18c7) |
-| 6 | `addFlat` (A-101) | SocietyLedger | MEERA (scripted) | [`0x2581…3483`](https://testnet.mstscan.com/tx/0x2581cbe32c4db1b3b39f37226ad3273478058fa6a161ef176726c095e7343483) |
-| 7 | `payMaintenance` | SocietyLedger | PRIYA (scripted) | [`0xc15d…e1af`](https://testnet.mstscan.com/tx/0xc15d0a915b907b72e627e26ade9261b6c04f9ba8a9ed812cecfcbc5e2898e1af) |
-| 8 | `propose` (PayVendor, ₹1,200 plumbing invoice) | SocietyLedger | MEERA (scripted) | [`0x7e42…2972`](https://testnet.mstscan.com/tx/0x7e42c77c8d78d4e142c4119e2fbe4f6d09256b572b3287e8ccf57fa5b342e972) |
-| 9 | `attestInvoice` (risk 0, clean) | SocietyLedger | **AGENT** | [`0x81c3…a5bc`](https://testnet.mstscan.com/tx/0x81c3b043d7d05ef38d04d08650753730a5ac62a82aeaadb3dd02037ae932a5bc) |
-| 10 | `execute` (pays the vendor) | SocietyLedger | **KEEPER** | [`0x2ebb…4709`](https://testnet.mstscan.com/tx/0x2ebb4df7bed31fc388f80ebaa317b3e4465c624ed2fd80997e859edf97164709) |
-| 11 | `offerLease` | RentalEscrow | ROHAN (scripted) | [`0x272e…1a5b`](https://testnet.mstscan.com/tx/0x272ee5ddf08818779f9813167eb821cd0072f9d25ea0e87899a0fe40c0911a5b) |
-| 12 | `signLease` (**deposit locked**, ₹1,80,000) | RentalEscrow | ASHA (scripted) | [`0x5dd8…1621`](https://testnet.mstscan.com/tx/0x5dd8432d05d16b561f66c5b77f25cac3c29416bc10e5caec8362c7cc34181621) |
-| 13 | `payRent` (rent → landlord, maintenance → society) | RentalEscrow | ASHA (scripted) | [`0x9f99…1429`](https://testnet.mstscan.com/tx/0x9f9904cdc3a874cdfe700e08da69608940b6725cf24cfdc2267bb89f3d661429) |
-| 14 | `submitBaseline` (move-in evidence hash) | RentalEscrow | ASHA (scripted) | [`0x5ece…ee5e`](https://testnet.mstscan.com/tx/0x5ecbe4eb16369ee9a008b0bcd815dea3e2b77de70696d8dcb80a7c17dd82ee5e) |
-| 15 | `finalizeBaseline` (landlord silent → presumed accepted) | RentalEscrow | **KEEPER** | [`0x7c6a…e3951`](https://testnet.mstscan.com/tx/0x7c6a8c3af1e914d66ab123d35355c2e80d5b69ffe2ccede7a3c15bfc41be3951) |
-| 16 | `createProject` (3 milestones, funded in full) | MilestoneEscrow | ROHAN (scripted) | [`0xa0e2…300d`](https://testnet.mstscan.com/tx/0xa0e2d0c5ba238b6a670247554cfc2f93f0c4c7e680571b3581a91d0718f4300d) |
-| 17 | `acceptProject` (pays milestone 0's advance) | MilestoneEscrow | IMRAN (scripted) | [`0x4ae3…b75a`](https://testnet.mstscan.com/tx/0x4ae388772e1db53fe903a638cd1320e146940e9e3b420f9688787c8b5f38b75a) |
-| 18 | `submitClaim` (milestone 0 line items) | MilestoneEscrow | IMRAN (scripted) | [`0xaa09…072f`](https://testnet.mstscan.com/tx/0xaa09e0a160f1dad89f3bdd3d7d84012c6a2ce852fda2b70ec3872791c2a4072f) |
-| 19 | `attest` (per-item AI backing) | MilestoneEscrow | **AGENT** | [`0xd740…e480`](https://testnet.mstscan.com/tx/0xd740c2bb075a77d010d1b18bcb20aea1c9579a69070fe3fa3e0d143cdfaee480) |
-| 20 | `respond(0)` (approve; opens milestone 1 and pays its advance) | MilestoneEscrow | ROHAN (scripted) | [`0xf8e9…b1c`](https://testnet.mstscan.com/tx/0xf8e9a06729ba2776c3cab358a83aa0379b9730db581019d8ac94a13144a10b1c) |
+| 1 | `register` (mints the soulbound passport) | NestRegistry | MEERA (scripted) | [`0x4adf…48e1`](https://testnet.mstscan.com/tx/0x4adf248bbd8303683906621183a6575d06781241cd1dc449b70cdfb4eded48e1) |
+| 2 | `verify` | NestRegistry | ADMIN | [`0x4ec8…37aa`](https://testnet.mstscan.com/tx/0x4ec83a2eb6d5238bb2f986f97582d24d868e5ab748769e9e9cba1a20b66e37aa) |
+| 3 | `addArbiter` | DisputeResolver | ADMIN | [`0x482c…593d`](https://testnet.mstscan.com/tx/0x482c74e79c580e8d94a14fa91c9bb21203ac98ec53e3e0e23e61b264bc3f593d) |
+| 4 | `setTierParams` | NestPassport | ADMIN | [`0x1b2b…ce83`](https://testnet.mstscan.com/tx/0x1b2b24ebedbef367e20f9140f2cf5095f47fa7f23e8920250d44e8739222ce83) |
+| 5 | `createSociety` (Green Meadows Residency) | SocietyLedger | MEERA (scripted) | [`0xc9cb…6f0c`](https://testnet.mstscan.com/tx/0xc9cbdaf43556734d1f50e4530ea121a3d3ab183326446858603366a52c006f0c) |
+| 6 | `addFlat` (A-101) | SocietyLedger | MEERA (scripted) | [`0xbd70…a34d`](https://testnet.mstscan.com/tx/0xbd706f7f7fe024df59b35c8978d67c5265e81bdad732e754b74122983d5fa34d) |
+| 7 | `payMaintenance` | SocietyLedger | PRIYA (scripted) | [`0x21ae…06fe`](https://testnet.mstscan.com/tx/0x21ae21c5608e77af14bd8305d4a62cb54c4d2741e0812946176d8c896bdf06fe) |
+| 8 | `propose` (PayVendor, ₹1,200 plumbing invoice) | SocietyLedger | MEERA (scripted) | [`0x6094…c9be`](https://testnet.mstscan.com/tx/0x6094576ccaf8465c996107f1dd7ebfb6742fd880ca0fdfcf3ea7eb069dccc9be) |
+| 9 | `attestInvoice` (Gemini read the invoice: risk 0, clean) | SocietyLedger | **AGENT** | [`0xeb37…2b66`](https://testnet.mstscan.com/tx/0xeb37eb11d45a1b974b225db71a6e0a3609fefa3519643a16d027305e329e2b66) |
+| 10 | `execute` (pays the vendor) | SocietyLedger | **KEEPER** | [`0x0bad…a7de`](https://testnet.mstscan.com/tx/0x0bad656b14e95b883999c0ad07867aa35bf76477bd279c7242a870a8269da7de) |
+| 11 | `offerLease` | RentalEscrow | ROHAN (scripted) | [`0x4ae7…0b56`](https://testnet.mstscan.com/tx/0x4ae71eb15a2bfdbc98ddd381863f7f31b0646e9cc2de3286565a0b7a87740b56) |
+| 12 | `signLease` (**deposit locked**, ₹1,80,000) | RentalEscrow | ASHA (scripted) | [`0xf8e9…74eb`](https://testnet.mstscan.com/tx/0xf8e9db5bc90c044c5070b79fb9ca7aa0080ec4c84c3c7043441265b3ed5374eb) |
+| 13 | `payRent` (rent → landlord, maintenance → society) | RentalEscrow | ASHA (scripted) | [`0xf9ca…42cc`](https://testnet.mstscan.com/tx/0xf9ca44f894241f5088a0cc6869708547d42dfbc8a0f30a2c3ddfd32ede7842cc) |
+| 14 | `submitBaseline` (move-in photos hash + AI move-in report) | RentalEscrow | ASHA (scripted) | [`0x2997…5ab8`](https://testnet.mstscan.com/tx/0x299764a456c68e612839c3cdad73210f92c62968673b0b18b7e1f9be6ff55ab8) |
+| 15 | `finalizeBaseline` (landlord silent → presumed accepted) | RentalEscrow | **KEEPER** | [`0x3d85…6dca`](https://testnet.mstscan.com/tx/0x3d852fd555e64b80dbe8780093bcc70b2b691ffb2ab98ac9d994ea8214416dca) |
+| 16 | `startMoveOut` (move-out photos; Gemini found the cracked tile) | RentalEscrow | ASHA (BridgeKey) | [`0x796d…8e25`](https://testnet.mstscan.com/tx/0x796d504b1c1881cf97c3f6edb9dcde27cb6ab72b60f4e89e06383c88bb678e25) |
+| 17 | `submitClaim` (₹450 tile deduction) | RentalEscrow | ROHAN (BridgeKey) | [`0x750c…b422`](https://testnet.mstscan.com/tx/0x750cc633298ccf1f75052ab08c62b2176377dd2bdedb219fb83be5715dc5b422) |
+| 18 | `attest` (AI backs the ₹450, 3 s after the claim) | RentalEscrow | **AGENT** | [`0x112b…7291`](https://testnet.mstscan.com/tx/0x112bf394c3a494b21b957fbc56dbfa90e1433d830ab91682f55bfad636187291) |
+| 19 | `respond(0)` (tenant accepts: ₹450 to landlord, ₹1,79,550 back to tenant, lease closed, passport → Tier 3) | RentalEscrow | ASHA (BridgeKey) | [`0x2017…b3bd`](https://testnet.mstscan.com/tx/0x2017e144496ed6065d847a53eebcfc26f36a35f61be02264624d6d4a7260b3bd) |
 
-The live demo adds `startMoveOut`, rental `submitClaim` + `attest`, `respond(mask)`, arbiter `vote`, a trust-priced `offerLease`, `finalizeAfterSilence`, and a flagged `attestInvoice` with override `approve`s. The seed alone produced 72 transactions; the full list is on each contract's MSTScan page.
+The live demo adds a greedy claim with an unbacked item, `respond(mask)` (itemised dispute), arbiter `vote`s, a trust-priced `offerLease` and a flagged `attestInvoice` with override `approve`s. The deployment already holds 88 transactions; the full list is on each contract's MSTScan page.
 
 ### BridgeKey
 
@@ -236,7 +236,9 @@ The spec planned to use `@mstblockchain/mst-sdk` for the backend's gas drip and 
 - **Rent and renovation claims:** a backed item is paid only if the payer stays silent. Anything the payer disputes goes to three human arbiters.
 - **Society bills:** a flag only raises the approval tier and resets approvals. Each committee member must then write an override reason, which is published on the public dashboard.
 
-**Fixtures mode (used in the live demo).** `LLM_PROVIDER=fixtures` returns recorded model outputs from `packages/backend/src/ai/fixtures/`. The rest of the pipeline stays real: integrity checks, code rules, report hashing, and the on-chain attestation from the agent wallet. Every report then says `"model": "fixtures"`, and the UI shows an **"AI: fixture mode"** badge. To use a real model, set `LLM_PROVIDER=anthropic` (or `gemini`) and the API key, then restart the backend.
+**Live model in the demo: Google Gemini (`gemini-3.5-flash`).** Every report the demo shows comes from a real vision-model call, stored with its hash, and the UI badge names the model. `LLM_PROVIDER=anthropic` switches to Claude. `LLM_PROVIDER=fixtures` returns recorded outputs from `packages/backend/src/ai/fixtures/` (labelled "AI: fixture mode") and is the fallback if the model API is down; the integrity checks, rules and on-chain attestations still run.
+
+**Prepared images in the demo (demo mode).** We can't crack a tile at the venue, so the demo flats use AI-generated room photos, visibly stamped "AI-generated demo image" (`demo-photos/`), uploaded through the capture wizard instead of the live camera. The backend runs with `DEMO_UPLOADS=1`: an uploaded photo isn't rejected just for lacking a camera timestamp, but reuse and duplicate checks still apply, and every such photo carries an "Uploaded — not live camera" badge. Without the flag (production), only live camera shots can earn AI backing. Each demo lease has its own image set (`demo-photos/set-1..4`), so no lease's photos look reused against another's.
 
 ---
 
@@ -281,7 +283,7 @@ The spec planned to use `@mstblockchain/mst-sdk` for the backend's gas drip and 
    - `/society/new`: create your own society.
 
    Each step links to its transaction on MSTScan.
-5. **Want to see a finished flow?** The seeded lease `/rent/1` (ROHAN → ASHA), project `/build/1` (ROHAN → IMRAN) and society `/society/1` are readable by anyone. Only their parties can act on them.
+5. **Want to see a finished flow?** Lease `/rent/1` (ROHAN → ASHA) went through move-out, an AI-backed claim and settlement in our dry run, and society `/society/1` has three AI-checked plumbing payouts. Anyone can read them; only their parties can act. Leases `/rent/2`–`/rent/4` (tenants PRIYA, IMRAN, C5) are staged for live demos.
 
 Demo timings are seconds, not days, so things move while you watch. For example, a rent period is 90 s and a claim window is 120 s.
 
@@ -309,14 +311,15 @@ pnpm --filter @nestledger/contracts compile   # also exports ABIs to packages/sh
 
 ```bash
 pnpm --filter @nestledger/contracts test          # 61 tests
-pnpm --filter @nestledger/backend test            # 46 tests
+pnpm --filter @nestledger/backend test            # 51 tests
 pnpm --filter @nestledger/backend dev             # API + indexer + keeper + AI agent on :8080
 pnpm --filter @nestledger/frontend dev            # app on :3000
 
 pnpm --filter @nestledger/contracts deploy:testnet   # writes shared/src/addresses.ts + ABIs
 pnpm --filter @nestledger/contracts verify:testnet   # MSTScan verification
 pnpm --filter @nestledger/contracts exec hardhat run scripts/actors/register-cast.ts --network testnet
-pnpm --filter @nestledger/backend exec tsx scripts/seed.ts   # with the backend running
+pnpm --filter @nestledger/backend exec tsx scripts/seed.ts   # with the backend running (society + 4 demo leases)
+powershell -ExecutionPolicy Bypass -File .\reset-demo.ps1 -Verify   # all of the above in one command: fresh contracts + fresh DB + seed
 ```
 
 **Public hosting:** `powershell -ExecutionPolicy Bypass -File .\start-public.ps1` starts the backend, a production frontend build and two Cloudflare tunnels ([docs/HOSTING.md](docs/HOSTING.md)).
@@ -338,9 +341,10 @@ pnpm --filter @nestledger/backend exec tsx scripts/seed.ts   # with the backend 
 
 - **Demo INR rate:** amounts are tMSTC on-chain. Rupees are shown at a labelled demo rate of ₹10,00,000 per tMSTC, so ₹30,000 rent = 0.03 tMSTC.
 - **Scripted actors:** committee members C3–C5 and arbiters ARB2–ARB3 sign from scripts during the live demo, and the UI labels them. The seeded history was also sent by script from the demo-cast keys. The people are fictional, and every wallet and transaction is real.
-- **AI fixtures mode:** the demo uses recorded model outputs (labelled "AI: fixture mode"). The integrity checks, the rules and the on-chain attestations still run.
+- **Prepared images:** the demo flats are AI-generated, labelled room photos uploaded in demo mode (`DEMO_UPLOADS=1`); production accepts live camera shots only. See [The AI attestor](#the-ai-attestor).
+- **AI model availability:** the attestor calls Gemini live. If the model is overloaded, the agent retries and then leaves items unbacked (humans decide); `LLM_PROVIDER=fixtures` is the labelled fallback.
 - **Hosting:** quick tunnels from a laptop, not a managed host, because the AGENT and KEEPER keys and the seeded evidence live on that machine.
-- **Not built:** TankerTrust / IoT (dropped), change orders in the UI (the contract supports them), and PDF invoices (photos only).
+- **Not built or not demoed:** TankerTrust / IoT (dropped), BuildSafe renovations (contract built, tested and deployed, but out of the live demo), change orders in the UI (the contract supports them), and PDF invoices (photos only).
 
 **Roadmap (not built):** an INR stablecoin with a UPI on-ramp, gasless transactions through a paymaster, DigiLocker-based verification, society-specific arbiter pools with staking and random selection, e-stamped rental agreements, and insurance for deposits in dispute.
 
