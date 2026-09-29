@@ -127,6 +127,39 @@ export function registerPublicSocieties(app: FastifyInstance, db: Db, chain: Cha
       });
     }
 
+    const labels = new Map(flats.map(([fid, f]) => [fid.toString(), f.label as string]));
+    const declined = [];
+    for (const [pid, p] of proposals) {
+      const status = ProposalStatus[Number(p.status)];
+      if (status !== "Rejected" && status !== "Cancelled") continue;
+      const id = pid.toString();
+      const ended = db.get<{ tx_hash: string; ts: number }>(
+        "SELECT tx_hash, ts FROM events WHERE contract = 'SocietyLedger' AND name IN ('ProposalRejected', 'ProposalCancelled') AND k1 = ? ORDER BY id DESC LIMIT 1", [id],
+      );
+      const votes = db.query<{ args_json: string }>(
+        "SELECT args_json FROM events WHERE contract = 'SocietyLedger' AND name = 'ResidentVoted' AND k1 = ? ORDER BY id", [id],
+      ).map((r) => {
+        const v = JSON.parse(r.args_json) as Args;
+        return { flatLabel: labels.get(v.flatId) ?? null, support: v.support === "true", weight: Number(v.weight) };
+      });
+      const votedWeight = Number(p.votesFor) + Number(p.votesAgainst);
+      const quorumMet = votedWeight * 10_000 >= Number(s.totalWeight) * Number(s.config.quorumBps);
+      const report = jsonOf(db, "reports", p.reportHash);
+      const invoice = jsonOf(db, "manifests", p.docHash);
+      declined.push({
+        proposalId: id, kind: ProposalKind[Number(p.kind)], status, payee: lc(p.payee),
+        amountWei: p.amount.toString(), category: p.category, docHash: p.docHash,
+        invoiceFiles: (invoice?.files as string[] | undefined) ?? [],
+        tier: Number(p.tier), attested: p.attested, flagged: p.flagged, riskScore: Number(p.riskScore),
+        justification: report?.justification ?? null,
+        votesFor: p.votesFor.toString(), votesAgainst: p.votesAgainst.toString(),
+        totalWeight: Number(s.totalWeight), quorumBps: Number(s.config.quorumBps), votes,
+        reason: status === "Cancelled" ? "withdrawn by the proposer" : quorumMet ? "residents voted against" : "resident quorum not met",
+        createdAt: Number(p.createdAt), endedAt: ended?.ts ?? null, txHash: ended?.tx_hash ?? null,
+      });
+    }
+    declined.sort((a, b) => Number(b.proposalId) - Number(a.proposalId));
+
     const body = {
       societyId: req.params.id, name: s.name, admin: lc(s.admin), metaHash: s.metaHash,
       meta: jsonOf(db, "manifests", s.metaHash),
@@ -148,6 +181,7 @@ export function registerPublicSocieties(app: FastifyInstance, db: Db, chain: Cha
         totalPaidWei: f.totalPaid.toString(), lastPaidAt: Number(f.lastPaidAt), paidThisMonth: paidFlatsThisMonth.has(fid.toString()),
       })),
       openProposals: open,
+      declinedProposals: declined,
       updatedAt: new Date().toISOString(),
     };
     cache.set(req.params.id, { at: Date.now(), body });
