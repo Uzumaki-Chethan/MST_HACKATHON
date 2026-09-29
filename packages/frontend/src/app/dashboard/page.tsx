@@ -7,6 +7,7 @@ import { StatusChip } from "@/components/Badges";
 import { Countdown } from "@/components/Countdown";
 import { Notice, RequireWallet } from "@/components/Gates";
 import { useNest } from "@/hooks/useNest";
+import { LandlordRoleNote, useCanOfferLease } from "@/hooks/useCanOfferLease";
 import { nextStep, roleOf, type LeaseView, type Tranche } from "@/lib/lease";
 import { useClaimState } from "@/app/rent/[id]/moveout";
 
@@ -38,6 +39,7 @@ function Dashboard() {
     query: { enabled: !!contracts.registry.address && !!address },
   });
   const leases = useIds(contracts.rental, "agreementsOf", address);
+  const canOffer = useCanOfferLease();
   const societies = useIds(contracts.ledger, "societiesOf", address);
   const disputes = useIds(contracts.resolver, "disputesOf", address);
 
@@ -57,8 +59,9 @@ function Dashboard() {
       <section className="card space-y-3 md:col-span-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-semibold text-slate-900">Leases</h2>
-          <Link href="/rent/new" className="btn-secondary">Offer a lease</Link>
+          {canOffer && <Link href="/rent/new" className="btn-secondary">Offer a lease</Link>}
         </div>
+        {canOffer === false && <LandlordRoleNote />}
         {!contracts.rental.address ? (
           <p className="text-sm text-slate-500">RentalEscrow not deployed yet.</p>
         ) : leases.data?.length ? (
