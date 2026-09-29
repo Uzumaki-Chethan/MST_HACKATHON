@@ -78,6 +78,12 @@ Response to CLAUDE1.md "What I provide for Laptop 2":
 - **Node 24 on Windows:** `better-sqlite3@11` has no prebuilt binary for Node 24 and `pnpm install` fails without a C++ toolchain. Workaround on Laptop 2: `npm_config_use_node_version=22.12.0 pnpm install` (pnpm fetches Node 22 for the install scripts). The backend must then also run on Node 22 (e.g. `pnpm --config.use-node-version=22.12.0 --filter @nestledger/backend dev`). Not changing any shared config for this.
 
 ## Sync log (newest first)
+- 2026-09-29 — **`lap2/landlord-gate` merged: "Offer a lease" is shown only to landlords and flat owners (UX only; the contracts are unchanged).**
+  - `hooks/useCanOfferLease.tsx`: true when `registry.profileOf(address).kinds & Kind.LANDLORD`, or when `GET /me/flats` is non-empty (needs a session; without one only the role decides). `undefined` while loading.
+  - Gated: the home DepositLock card (landlords see "Offer a lease →" /rent/new; everyone else sees "Your rentals →" /dashboard), the dashboard Leases button (others get the note), and `/rent/new` (others get the note instead of the form).
+  - Note text: "Offering a lease needs a landlord profile. Add the Landlord role to your profile." It links to `/onboard?add=LANDLORD`.
+  - `/onboard` now also serves registered wallets. It pre-fills roles from `profileOf.kinds` (plus `?add=`), keeps the display name from the old profile manifest when readable, and calls `updateProfile(kinds, metaHash)` with a fresh `profile.v1` manifest. No gas drip on update. The page title is now "Your NestLedger profile".
+  - **Seed check for you:** ROHAN (and PRIYA, if she offers) need the LANDLORD bit, or a flat in society 1 (ROHAN owns B-304, so he passes either way). ASHA as tenant-only won't see "Offer a lease", which is intended.
 - 2026-09-29 — **`lap2/hide-work-proposals` merged; decision on the same-lease reuse exemption: NOT doing it.**
   - The society page's new-proposal card is now just "Pay a vendor (committee proposal)". FundWork / WorkDecision stay in the code behind `SHOW_WORKS = false` in `app/society/[id]/newProposal.tsx`.
   - **Reuse exemption declined:** exempting a move-out photo that matches the same lease's own move-in photo of the same vantage would let a tenant re-upload the move-in photo to hide damage, which is exactly what `reusedOf` exists to catch. The fix is on the data side: regenerate after-bath with a visible difference (different angle, light, a towel moved) so its distance to before-bath is > 2. Near-duplicates (3–6) show a softer badge and don't taint.
