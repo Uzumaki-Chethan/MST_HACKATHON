@@ -27,7 +27,12 @@ export function ProposalsList({ data, isCommittee }: { data: SocietyData; isComm
 /** The AI's invoice report is public by design (society spending). */
 export function InvoiceFlag({ p }: { p: ProposalRow }) {
   const report = useReport<InvoiceReport>(p.attested && p.reportHash !== ZERO_HASH ? p.reportHash : null);
-  if (!p.attested) return <span className="text-xs text-slate-500">Waiting for the AI invoice check…</span>;
+  if (!p.attested) {
+    // Pending proposals are still inside the attest window; anything past it went ahead under the timeout rule.
+    return Number(p.status) === 0
+      ? <span className="text-xs text-slate-500">Waiting for the AI invoice check…</span>
+      : <span className="text-xs text-slate-500">No AI check: the AI didn&apos;t answer within its time window, so the committee decided without it.</span>;
+  }
   return (
     <div className="space-y-1">
       <div className="flex flex-wrap items-center gap-2">
